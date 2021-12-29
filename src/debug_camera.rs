@@ -22,8 +22,8 @@ pub struct CameraSettings {
 impl Default for CameraSettings {
     fn default() -> Self {
         Self {
-            sensitivity: 0.00012,
-            speed: 12.,
+            sensitivity: 0.00024,
+            speed: 8.,
         }
     }
 }
@@ -35,7 +35,8 @@ impl Plugin for DebugCameraPlugin {
             .add_startup_system(setup_grab_cursor.system())
             .add_startup_system(setup_camera.system())
             .add_system(cursor_grab.system())
-            .add_system(camera_look.system());
+            .add_system(camera_look.system())
+            .add_system(camera_move.system());
     }
 }
 
@@ -91,5 +92,38 @@ fn camera_look(
             transform.rotation = Quat::from_axis_angle(Vec3::Y, state.yaw)
                 * Quat::from_axis_angle(Vec3::X, state.pitch);
         }
+    }
+}
+
+/// Handles keyboard input and movement
+fn camera_move(
+    keys: Res<Input<KeyCode>>,
+    time: Res<Time>,
+    windows: Res<Windows>,
+    settings: Res<CameraSettings>,
+    mut query: Query<(&DebugCamera, &mut Transform)>,
+) {
+    let window = windows.get_primary().unwrap();
+    for (_camera, mut transform) in query.iter_mut() {
+        let mut velocity = Vec3::ZERO;
+        let local_z = transform.local_z();
+        let forward = -Vec3::new(local_z.x, 0., local_z.z);
+        let right = Vec3::new(local_z.z, 0., -local_z.x);
+
+        for key in keys.get_pressed() {
+            if window.cursor_locked() {
+                match key {
+                    KeyCode::W => velocity += forward,
+                    KeyCode::S => velocity -= forward,
+                    KeyCode::A => velocity -= right,
+                    KeyCode::D => velocity += right,
+                    KeyCode::Space => velocity += Vec3::Y,
+                    KeyCode::LShift => velocity -= Vec3::Y,
+                    _ => (),
+                }
+            }
+        }
+        velocity = velocity.normalize_or_zero();
+        transform.translation += velocity * time.delta_seconds() * settings.speed
     }
 }
