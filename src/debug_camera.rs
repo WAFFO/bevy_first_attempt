@@ -46,10 +46,15 @@ fn setup_grab_cursor(mut windows: ResMut<Windows>) {
 }
 
 /// Spawns the `Camera3dBundle` to be controlled
-fn setup_camera(mut commands: Commands) {
+fn setup_camera(mut commands: Commands, mut state: ResMut<InputState>) {
+    let transform = Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y);
+    let q = &transform.rotation;
+    state.yaw =
+        (2.0 * (q.y * q.z + q.w * q.x)).atan2(q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z);
+    state.pitch = (-2.0 * (q.x * q.z - q.w * q.y)).asin();
     commands
         .spawn_bundle(PerspectiveCameraBundle {
-            transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform,
             ..Default::default()
         })
         .insert(DebugCamera);
@@ -117,8 +122,8 @@ fn camera_move(
                     KeyCode::S => velocity -= forward,
                     KeyCode::A => velocity -= right,
                     KeyCode::D => velocity += right,
-                    KeyCode::Space => velocity += Vec3::Y,
-                    KeyCode::LShift => velocity -= Vec3::Y,
+                    KeyCode::R => velocity += Vec3::Y,
+                    KeyCode::F => velocity -= Vec3::Y,
                     _ => (),
                 }
             }
