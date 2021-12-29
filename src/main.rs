@@ -1,15 +1,20 @@
 use bevy::prelude::*;
 
+mod debug_camera;
+
+use debug_camera::DebugCameraPlugin;
+
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        .add_plugin(HelloPlugin)
+        .add_plugin(WorldPlugin)
+        .add_plugin(DebugCameraPlugin)
         .run();
 }
 
-pub struct HelloPlugin;
+pub struct WorldPlugin;
 
-impl Plugin for HelloPlugin {
+impl Plugin for WorldPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.insert_resource(Msaa { samples: 1 })
             .add_startup_system(setup.system())
@@ -35,7 +40,7 @@ fn setup(
     commands
         .spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+            material: materials.add(Color::rgb(0.8, 0.05, 0.6).into()),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..Default::default()
         })
@@ -43,11 +48,6 @@ fn setup(
     // light
     commands.spawn_bundle(LightBundle {
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..Default::default()
-    });
-    // camera
-    commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..Default::default()
     });
 }
