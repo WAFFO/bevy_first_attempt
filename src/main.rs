@@ -6,6 +6,7 @@ mod debug_camera;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
+use terrain::TerrainPlugin;
 
 fn main() {
     App::build()
@@ -20,6 +21,7 @@ fn main() {
         .add_plugin(WireframePlugin)
         .add_plugin(WorldPlugin)
         .add_plugin(DebugCameraPlugin)
+        .add_plugin(TerrainPlugin)
         .run();
 }
 
@@ -41,14 +43,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // plane
-    commands
-        .spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            ..Default::default()
-        })
-        .insert(Wireframe);
     // cube
     commands
         .spawn_bundle(PbrBundle {
