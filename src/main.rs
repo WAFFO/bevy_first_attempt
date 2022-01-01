@@ -1,12 +1,23 @@
 use bevy::prelude::*;
+use bevy::render::wireframe::{Wireframe, WireframePlugin};
+use bevy::wgpu::{WgpuFeature, WgpuFeatures, WgpuOptions};
 
 mod debug_camera;
+mod terrain;
 
 use debug_camera::DebugCameraPlugin;
 
 fn main() {
     App::build()
+        .insert_resource(WgpuOptions {
+            features: WgpuFeatures {
+                // The Wireframe requires NonFillPolygonMode feature
+                features: vec![WgpuFeature::NonFillPolygonMode],
+            },
+            ..Default::default()
+        })
         .add_plugins(DefaultPlugins)
+        .add_plugin(WireframePlugin)
         .add_plugin(WorldPlugin)
         .add_plugin(DebugCameraPlugin)
         .run();
@@ -31,11 +42,13 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // plane
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..Default::default()
-    });
+    commands
+        .spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
+            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            ..Default::default()
+        })
+        .insert(Wireframe);
     // cube
     commands
         .spawn_bundle(PbrBundle {
@@ -44,6 +57,7 @@ fn setup(
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..Default::default()
         })
+        .insert(Wireframe)
         .insert(Rotates);
     // light
     commands.spawn_bundle(LightBundle {
