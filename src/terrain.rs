@@ -8,10 +8,24 @@ use bevy::{
 };
 
 pub struct TerrainPlugin;
+struct TerrainSettings {
+    pub unit_count: usize,
+    pub unit_size: f32,
+}
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut bevy::prelude::AppBuilder) {
-        app.add_startup_system(terrain_startup.system());
+        app.init_resource::<TerrainSettings>()
+            .add_startup_system(terrain_startup.system());
+    }
+}
+
+impl Default for TerrainSettings {
+    fn default() -> Self {
+        TerrainSettings {
+            unit_count: 1024,
+            unit_size: 1.,
+        }
     }
 }
 
@@ -19,10 +33,14 @@ fn terrain_startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    terrain_settings: Res<TerrainSettings>,
 ) {
     commands
         .spawn_bundle(PbrBundle {
-            mesh: meshes.add(terrain_build(1024, 0.25)),
+            mesh: meshes.add(terrain_build(
+                terrain_settings.unit_count,
+                terrain_settings.unit_size,
+            )),
             material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
             ..Default::default()
         })
@@ -47,7 +65,8 @@ fn terrain_build(size: usize, unit_size: f32) -> Mesh {
     for cy in 0..(size + 1) {
         for cx in 0..(size + 1) {
             // do height here
-            vertices[vertex_index] = [cx as f32 * unit_size, 0., cy as f32 * unit_size];
+            let h = ((cx + cy) as f32 / 4.).sin();
+            vertices[vertex_index] = [cx as f32 * unit_size, h, cy as f32 * unit_size];
             vertex_index += 1;
         }
     }

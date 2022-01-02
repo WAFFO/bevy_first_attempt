@@ -114,6 +114,7 @@ fn camera_move(
         let local_z = transform.local_z();
         let forward = -Vec3::new(local_z.x, 0., local_z.z);
         let right = Vec3::new(local_z.z, 0., -local_z.x);
+        let mut sprint = 1.0f32;
 
         for key in keys.get_pressed() {
             if window.cursor_locked() {
@@ -124,11 +125,12 @@ fn camera_move(
                     KeyCode::D => velocity += right,
                     KeyCode::R => velocity += Vec3::Y,
                     KeyCode::F => velocity -= Vec3::Y,
+                    KeyCode::LShift => sprint = 4.,
                     _ => (),
                 }
             }
         }
         velocity = velocity.normalize_or_zero();
-        transform.translation += velocity * time.delta_seconds() * settings.speed
+        transform.translation += velocity * time.delta_seconds() * settings.speed * sprint
     }
 }
