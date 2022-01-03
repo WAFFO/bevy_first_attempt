@@ -2,6 +2,8 @@ use bevy::app::{Events, ManualEventReader};
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
 
+use crate::AppState;
+
 struct DebugCamera;
 pub struct DebugCameraPlugin;
 
@@ -32,11 +34,17 @@ impl Plugin for DebugCameraPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<InputState>()
             .init_resource::<CameraSettings>()
-            .add_startup_system(setup_grab_cursor.system())
-            .add_startup_system(setup_camera.system())
-            .add_system(cursor_grab.system())
-            .add_system(camera_look.system())
-            .add_system(camera_move.system());
+            .add_system_set(
+                SystemSet::on_enter(AppState::InGame)
+                    .with_system(setup_grab_cursor.system())
+                    .with_system(setup_camera.system()),
+            )
+            .add_system_set(
+                SystemSet::on_update(AppState::InGame)
+                    .with_system(cursor_grab.system())
+                    .with_system(camera_look.system())
+                    .with_system(camera_move.system()),
+            );
     }
 }
 

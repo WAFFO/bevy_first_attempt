@@ -7,6 +7,8 @@ use bevy::{
     },
 };
 
+use crate::AppState;
+
 pub struct TerrainPlugin;
 struct TerrainSettings {
     pub unit_count: usize,
@@ -15,8 +17,9 @@ struct TerrainSettings {
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut bevy::prelude::AppBuilder) {
-        app.init_resource::<TerrainSettings>()
-            .add_startup_system(terrain_startup.system());
+        app.init_resource::<TerrainSettings>().add_system_set(
+            SystemSet::on_enter(AppState::InGame).with_system(terrain_startup.system()),
+        );
     }
 }
 
@@ -58,6 +61,7 @@ fn terrain_build(size: usize, unit_size: f32) -> Mesh {
 
     vertices.resize(vertex_number, [0.0f32, 0.0f32, 0.0f32]);
     normals.resize(vertex_number, [0.0f32, 1.0f32, 0.0f32]);
+    // TODO: update UV coords to correct 00, 01, 10, 11 coords
     let uvs = vec![[0.0, 0.0, 0.0]; vertices.len()];
 
     // vertex
