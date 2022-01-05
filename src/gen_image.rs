@@ -3,8 +3,9 @@ use bevy::{
     render::texture::{Extent3d, TextureDimension, TextureFormat},
 };
 
+use crate::gen_menu::MenuData;
+
 pub struct ImageData {
-    camera_entity: Entity,
     image_entity: Entity,
     _image_handle: Handle<Texture>,
 }
@@ -13,6 +14,7 @@ pub fn setup_image(
     mut commands: Commands,
     mut textures: ResMut<Assets<Texture>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    menu_data: Res<MenuData>,
 ) {
     // Create a texture with varying shades of red.
     let texture = Texture::new_fill(
@@ -30,27 +32,35 @@ pub fn setup_image(
 
     let image_handle = textures.add(texture);
 
-    let camera_entity = commands
-        .spawn_bundle(OrthographicCameraBundle::new_2d())
-        .id();
-
     let image_entity = commands
-        .spawn_bundle(SpriteBundle {
-            material: materials.add(image_handle.clone().into()),
-            transform: Transform::from_scale(Vec3::splat(1.0)),
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.)),
+                justify_content: JustifyContent::Center,
+                ..Default::default()
+            },
+            material: materials.add(Color::NONE.into()),
             ..Default::default()
         })
+        .with_children(|parent| {
+            parent.spawn_bundle(ImageBundle {
+                style: Style {
+                    size: Size::new(Val::Auto, Val::Auto),
+                    aspect_ratio: Some(1.0),
+                    ..Default::default()
+                },
+                material: materials.add(image_handle.clone().into()),
+                ..Default::default()
+            });
+        })
+        .insert(Parent(menu_data.image_node_entity))
         .id();
     commands.insert_resource(ImageData {
-        camera_entity,
         image_entity,
         _image_handle: image_handle,
     });
 }
 
 pub fn cleanup_image(mut commands: Commands, image_data: Res<ImageData>) {
-    commands
-        .entity(image_data.camera_entity)
-        .despawn_recursive();
     commands.entity(image_data.image_entity).despawn_recursive();
 }

@@ -9,9 +9,10 @@ impl Plugin for GenMenuPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<ButtonMaterials>()
             .add_system_set(
-                SystemSet::on_enter(AppState::GenMenu)
-                    .with_system(setup_menu.system())
-                    .with_system(setup_image.system()),
+                SystemSet::on_enter(AppState::PreGenMenu).with_system(setup_menu.system()),
+            )
+            .add_system_set(
+                SystemSet::on_enter(AppState::GenMenu).with_system(setup_image.system()),
             )
             .add_system_set(SystemSet::on_update(AppState::GenMenu).with_system(menu.system()))
             .add_system_set(
@@ -39,18 +40,69 @@ impl FromWorld for ButtonMaterials {
     }
 }
 
-struct MenuData {
-    button_entity: Entity,
+pub struct MenuData {
+    root_node_entity: Entity,
+    pub image_node_entity: Entity,
 }
 
 fn setup_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     button_materials: Res<ButtonMaterials>,
+    mut color_materials: ResMut<Assets<ColorMaterial>>,
+    mut state: ResMut<State<AppState>>,
 ) {
     // ui camera
     commands.spawn_bundle(UiCameraBundle::default());
-    let button_entity = commands
+
+    let root_node_entity = commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                flex_direction: FlexDirection::ColumnReverse,
+                ..Default::default()
+            },
+            material: color_materials.add(Color::rgb(0., 0., 0.).into()),
+            ..Default::default()
+        })
+        .id();
+
+    let options_and_image_entity = commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .insert(Parent(root_node_entity))
+        .id();
+
+    let _options_node_entity = commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(35.), Val::Percent(100.)),
+                ..Default::default()
+            },
+            material: color_materials.add(Color::rgb(0.24, 0.24, 0.24).into()),
+            ..Default::default()
+        })
+        .insert(Parent(options_and_image_entity))
+        .id();
+
+    let image_node_entity = commands
+        .spawn_bundle(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                ..Default::default()
+            },
+            material: color_materials.add(Color::rgb(0.1, 0.1, 0.1).into()),
+            ..Default::default()
+        })
+        .insert(Parent(options_and_image_entity))
+        .id();
+
+    let _button_entity = commands
         .spawn_bundle(ButtonBundle {
             style: Style {
                 size: Size::new(Val::Percent(100.), Val::Px(65.0)),
@@ -82,8 +134,15 @@ fn setup_menu(
                 ..Default::default()
             });
         })
+        .insert(Parent(root_node_entity))
         .id();
-    commands.insert_resource(MenuData { button_entity });
+
+    commands.insert_resource(MenuData {
+        root_node_entity,
+        image_node_entity,
+    });
+
+    state.set(AppState::GenMenu).unwrap();
 }
 
 fn menu(
@@ -111,5 +170,7 @@ fn menu(
 }
 
 fn cleanup_menu(mut commands: Commands, menu_data: Res<MenuData>) {
-    commands.entity(menu_data.button_entity).despawn_recursive();
+    commands
+        .entity(menu_data.root_node_entity)
+        .despawn_recursive();
 }

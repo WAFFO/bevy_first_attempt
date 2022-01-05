@@ -13,6 +13,7 @@ use terrain::TerrainPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 enum AppState {
+    PreGenMenu,
     GenMenu,
     InGame,
 }
@@ -26,7 +27,7 @@ fn main() {
             },
             ..Default::default()
         })
-        .add_state(AppState::GenMenu)
+        .add_state(AppState::PreGenMenu)
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
         .add_plugin(WorldPlugin)
