@@ -8,6 +8,7 @@ pub struct GenMenuPlugin;
 impl Plugin for GenMenuPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<ButtonMaterials>()
+            .init_resource::<ProgressBarMaterials>()
             .add_system_set(
                 SystemSet::on_enter(AppState::PreGenMenu).with_system(setup_menu.system()),
             )
@@ -16,25 +17,33 @@ impl Plugin for GenMenuPlugin {
                     .with_system(setup_image.system())
                     .with_system(update_button_text.system()),
             )
-            .add_system_set(SystemSet::on_update(AppState::GenConfig).with_system(menu.system()))
+            .add_system_set(
+                SystemSet::on_update(AppState::GenConfig).with_system(generate_button.system()),
+            )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenRun).with_system(update_button_text.system()),
             )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_button_text.system()),
-                // .with_system(cleanup_menu.system())
-                // .with_system(cleanup_image.system()),
+            )
+            .add_system_set(
+                SystemSet::on_update(AppState::GenDone).with_system(progress_bar_button.system()),
+            )
+            .add_system_set(
+                SystemSet::on_exit(AppState::GenDone)
+                    .with_system(cleanup_menu.system())
+                    .with_system(cleanup_image.system()),
             );
     }
 }
 
+struct GenerateButton;
 pub struct ProgressBar;
 pub struct GenerateButtonText;
 
 struct ButtonMaterials {
     normal: Handle<ColorMaterial>,
     hovered: Handle<ColorMaterial>,
-    pressed: Handle<ColorMaterial>,
 }
 
 impl FromWorld for ButtonMaterials {
@@ -43,7 +52,20 @@ impl FromWorld for ButtonMaterials {
         ButtonMaterials {
             normal: materials.add(Color::rgb(0.15, 0.15, 0.15).into()),
             hovered: materials.add(Color::rgb(0.25, 0.25, 0.25).into()),
-            pressed: materials.add(Color::rgb(0.35, 0.75, 0.35).into()),
+        }
+    }
+}
+struct ProgressBarMaterials {
+    normal: Handle<ColorMaterial>,
+    hovered: Handle<ColorMaterial>,
+}
+
+impl FromWorld for ProgressBarMaterials {
+    fn from_world(world: &mut World) -> Self {
+        let mut materials = world.get_resource_mut::<Assets<ColorMaterial>>().unwrap();
+        ProgressBarMaterials {
+            normal: materials.add(Color::rgb(0., 0.60, 0.).into()),
+            hovered: materials.add(Color::rgb(0., 0.85, 0.).into()),
         }
     }
 }
@@ -57,6 +79,7 @@ fn setup_menu(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     button_materials: Res<ButtonMaterials>,
+    progress_bar_materials: Res<ProgressBarMaterials>,
     mut color_materials: ResMut<Assets<ColorMaterial>>,
     mut state: ResMut<State<AppState>>,
 ) {
@@ -128,9 +151,10 @@ fn setup_menu(
             material: button_materials.normal.clone(),
             ..Default::default()
         })
+        .insert(GenerateButton)
         .with_children(|parent| {
             parent
-                .spawn_bundle(NodeBundle {
+                .spawn_bundle(ButtonBundle {
                     style: Style {
                         size: Size::new(Val::Percent(0.), Val::Percent(100.)),
                         position_type: PositionType::Absolute,
@@ -141,7 +165,7 @@ fn setup_menu(
                         },
                         ..Default::default()
                     },
-                    material: color_materials.add(Color::rgb(0.0, 0.60, 0.0).into()),
+                    material: progress_bar_materials.normal.clone(),
                     ..Default::default()
                 })
                 .insert(ProgressBar);
@@ -171,25 +195,48 @@ fn setup_menu(
     state.set(AppState::GenConfig).unwrap();
 }
 
-fn menu(
+fn generate_button(
     mut state: ResMut<State<AppState>>,
     button_materials: Res<ButtonMaterials>,
     mut interaction_query: Query<
         (&Interaction, &mut Handle<ColorMaterial>),
-        (Changed<Interaction>, With<Button>),
+        (Changed<Interaction>, With<Button>, With<GenerateButton>),
     >,
 ) {
     for (interaction, mut material) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
-                // *material = button_materials.pressed.clone();
                 state.set(AppState::GenRun).unwrap();
+                *material = button_materials.normal.clone();
             }
             Interaction::Hovered => {
                 *material = button_materials.hovered.clone();
             }
             Interaction::None => {
                 *material = button_materials.normal.clone();
+            }
+        }
+    }
+}
+
+fn progress_bar_button(
+    mut state: ResMut<State<AppState>>,
+    progress_bar_materials: Res<ProgressBarMaterials>,
+    mut interaction_query: Query<
+        (&Interaction, &mut Handle<ColorMaterial>),
+        (Changed<Interaction>, With<Button>, With<ProgressBar>),
+    >,
+) {
+    for (interaction, mut material) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Clicked => {
+                state.set(AppState::InGame).unwrap();
+            }
+            Interaction::Hovered => {
+                *material = progress_bar_materials.hovered.clone();
+            }
+            Interaction::None => {
+                *material = progress_bar_materials.normal.clone();
             }
         }
     }
