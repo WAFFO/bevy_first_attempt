@@ -3,18 +3,23 @@ use bevy::render::wireframe::{Wireframe, WireframePlugin};
 use bevy::wgpu::{WgpuFeature, WgpuFeatures, WgpuOptions};
 
 mod debug_camera;
+mod game;
 mod gen_image;
 mod gen_menu;
+mod gen_run;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
 use gen_menu::GenMenuPlugin;
+use gen_run::GenRunPlugin;
 use terrain::TerrainPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 enum AppState {
     PreGenMenu,
-    GenMenu,
+    GenConfig,
+    GenRun,
+    GenDone,
     InGame,
 }
 
@@ -34,6 +39,7 @@ fn main() {
         .add_plugin(DebugCameraPlugin)
         .add_plugin(TerrainPlugin)
         .add_plugin(GenMenuPlugin)
+        .add_plugin(GenRunPlugin)
         .run();
 }
 

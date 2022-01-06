@@ -7,19 +7,15 @@ use bevy::{
     },
 };
 
-use crate::AppState;
-
 pub struct TerrainPlugin;
-struct TerrainSettings {
+pub struct TerrainSettings {
     pub unit_count: usize,
     pub unit_size: f32,
 }
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut bevy::prelude::AppBuilder) {
-        app.init_resource::<TerrainSettings>().add_system_set(
-            SystemSet::on_enter(AppState::InGame).with_system(terrain_startup.system()),
-        );
+        app.init_resource::<TerrainSettings>();
     }
 }
 
@@ -32,7 +28,7 @@ impl Default for TerrainSettings {
     }
 }
 
-fn terrain_startup(
+pub fn terrain_startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -50,7 +46,7 @@ fn terrain_startup(
         .insert(Wireframe);
 }
 
-fn terrain_build(size: usize, unit_size: f32) -> Mesh {
+pub fn terrain_build(size: usize, unit_size: f32) -> Mesh {
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
     let mut vertices: Vec<[f32; 3]> = Vec::new();

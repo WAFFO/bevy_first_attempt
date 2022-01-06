@@ -12,16 +12,24 @@ impl Plugin for GenMenuPlugin {
                 SystemSet::on_enter(AppState::PreGenMenu).with_system(setup_menu.system()),
             )
             .add_system_set(
-                SystemSet::on_enter(AppState::GenMenu).with_system(setup_image.system()),
+                SystemSet::on_enter(AppState::GenConfig)
+                    .with_system(setup_image.system())
+                    .with_system(update_button_text.system()),
             )
-            .add_system_set(SystemSet::on_update(AppState::GenMenu).with_system(menu.system()))
+            .add_system_set(SystemSet::on_update(AppState::GenConfig).with_system(menu.system()))
             .add_system_set(
-                SystemSet::on_exit(AppState::GenMenu)
-                    .with_system(cleanup_menu.system())
-                    .with_system(cleanup_image.system()),
+                SystemSet::on_enter(AppState::GenRun).with_system(update_button_text.system()),
+            )
+            .add_system_set(
+                SystemSet::on_enter(AppState::GenDone).with_system(update_button_text.system()),
+                // .with_system(cleanup_menu.system())
+                // .with_system(cleanup_image.system()),
             );
     }
 }
+
+pub struct ProgressBar;
+pub struct GenerateButtonText;
 
 struct ButtonMaterials {
     normal: Handle<ColorMaterial>,
@@ -121,18 +129,36 @@ fn setup_menu(
             ..Default::default()
         })
         .with_children(|parent| {
-            parent.spawn_bundle(TextBundle {
-                text: Text::with_section(
-                    "Generate",
-                    TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 40.0,
-                        color: Color::rgb(0.9, 0.9, 0.9),
+            parent
+                .spawn_bundle(NodeBundle {
+                    style: Style {
+                        size: Size::new(Val::Percent(0.), Val::Percent(100.)),
+                        position_type: PositionType::Absolute,
+                        position: Rect {
+                            left: Val::Percent(0.),
+                            right: Val::Auto,
+                            ..Default::default()
+                        },
+                        ..Default::default()
                     },
-                    Default::default(),
-                ),
-                ..Default::default()
-            });
+                    material: color_materials.add(Color::rgb(0.0, 0.60, 0.0).into()),
+                    ..Default::default()
+                })
+                .insert(ProgressBar);
+            parent
+                .spawn_bundle(TextBundle {
+                    text: Text::with_section(
+                        "Generate",
+                        TextStyle {
+                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                            font_size: 40.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                        Default::default(),
+                    ),
+                    ..Default::default()
+                })
+                .insert(GenerateButtonText);
         })
         .insert(Parent(root_node_entity))
         .id();
@@ -142,7 +168,7 @@ fn setup_menu(
         image_node_entity,
     });
 
-    state.set(AppState::GenMenu).unwrap();
+    state.set(AppState::GenConfig).unwrap();
 }
 
 fn menu(
@@ -156,8 +182,8 @@ fn menu(
     for (interaction, mut material) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
-                *material = button_materials.pressed.clone();
-                state.set(AppState::InGame).unwrap();
+                // *material = button_materials.pressed.clone();
+                state.set(AppState::GenRun).unwrap();
             }
             Interaction::Hovered => {
                 *material = button_materials.hovered.clone();
@@ -173,4 +199,20 @@ fn cleanup_menu(mut commands: Commands, menu_data: Res<MenuData>) {
     commands
         .entity(menu_data.root_node_entity)
         .despawn_recursive();
+}
+
+fn update_button_text(
+    state: Res<State<AppState>>,
+    mut query: Query<&mut Text, With<GenerateButtonText>>,
+) {
+    let str = match state.current() {
+        AppState::GenConfig => "Generate",
+        AppState::GenRun => "Running...",
+        AppState::GenDone => "Complete!",
+        _ => "Shouldn't be here....",
+    };
+
+    for mut text in query.iter_mut() {
+        text.sections[0].value = str.to_string();
+    }
 }
