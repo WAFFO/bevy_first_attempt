@@ -1,18 +1,20 @@
 use bevy::prelude::*;
 
 use crate::gen_menu::ProgressBar;
+use crate::terrain::terrain_build;
 use crate::AppState;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-enum GenState {
+pub enum GenState {
     Off,
     Test,
+    TestMesh,
     Done,
 }
 
 pub struct GenRunPlugin;
 
-struct Tracker {
+pub struct Tracker {
     pub current_stage: u32,
     pub current_step_progress: f32,
     pub max_stage: u32,
@@ -30,6 +32,9 @@ impl Plugin for GenRunPlugin {
             )
             .add_system_set(SystemSet::on_update(GenState::Test).with_system(run_test.system()))
             .add_system_set(
+                SystemSet::on_enter(GenState::TestMesh).with_system(terrain_build.system()),
+            )
+            .add_system_set(
                 SystemSet::on_enter(GenState::Done).with_system(end_generation.system()),
             )
             .add_system_set(
@@ -45,7 +50,7 @@ fn start_generation(mut tracker: ResMut<Tracker>, state: ResMut<State<GenState>>
 /////////////// start: run functions for generation
 
 fn run_test(mut tracker: ResMut<Tracker>, state: ResMut<State<GenState>>) {
-    tracker.add_progress(0.01, state);
+    tracker.add_progress(0.1, state);
 }
 
 /////////////// end: run functions for generation
@@ -61,13 +66,22 @@ impl Default for Tracker {
         Tracker {
             current_stage: 0,
             current_step_progress: 0.,
-            max_stage: 2,
+            max_stage: 3,
         }
     }
 }
 
+fn stage_to_state(stage: u32) -> GenState {
+    match stage {
+        0 => GenState::Off,
+        1 => GenState::Test,
+        2 => GenState::TestMesh,
+        _ => GenState::Done,
+    }
+}
+
 impl Tracker {
-    fn add_progress(&mut self, progress: f32, mut state: ResMut<State<GenState>>) {
+    pub fn add_progress(&mut self, progress: f32, mut state: ResMut<State<GenState>>) {
         self.current_step_progress += progress;
         if self.current_step_progress >= 1.0 {
             self.current_step_progress = 0.0;
@@ -77,17 +91,9 @@ impl Tracker {
     }
 }
 
-fn stage_to_state(stage: u32) -> GenState {
-    match stage {
-        0 => GenState::Off,
-        1 => GenState::Test,
-        _ => GenState::Done,
-    }
-}
-
 fn update_progress_bar(tracker: Res<Tracker>, mut query: Query<&mut Style, With<ProgressBar>>) {
-    let c = tracker.current_stage as f32;
-    let m = tracker.max_stage as f32;
+    let c = tracker.current_stage as f32 - 1.0;
+    let m = tracker.max_stage as f32 - 1.0;
     let s = tracker.current_step_progress;
     let p = (c / m + s / m) * 100.;
     for mut style in query.iter_mut() {

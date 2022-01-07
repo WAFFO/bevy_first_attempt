@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::terrain::terrain_startup;
 use crate::AppState;
 
-struct GamePlugin;
+pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut AppBuilder) {

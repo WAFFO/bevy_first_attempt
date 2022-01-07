@@ -10,6 +10,7 @@ mod gen_run;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
+use game::GamePlugin;
 use gen_menu::GenMenuPlugin;
 use gen_run::GenRunPlugin;
 use terrain::TerrainPlugin;
@@ -40,6 +41,7 @@ fn main() {
         .add_plugin(TerrainPlugin)
         .add_plugin(GenMenuPlugin)
         .add_plugin(GenRunPlugin)
+        .add_plugin(GamePlugin)
         .run();
 }
 

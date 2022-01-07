@@ -7,15 +7,30 @@ use bevy::{
     },
 };
 
+use crate::gen_run::{GenState, Tracker};
+
 pub struct TerrainPlugin;
 pub struct TerrainSettings {
     pub unit_count: usize,
     pub unit_size: f32,
 }
+pub struct TerrainMesh {
+    pub mesh_handle: Handle<Mesh>,
+}
 
 impl Plugin for TerrainPlugin {
     fn build(&self, app: &mut bevy::prelude::AppBuilder) {
-        app.init_resource::<TerrainSettings>();
+        app.init_resource::<TerrainSettings>()
+            .init_resource::<TerrainMesh>();
+    }
+}
+
+impl FromWorld for TerrainMesh {
+    fn from_world(world: &mut World) -> Self {
+        let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
+        TerrainMesh {
+            mesh_handle: meshes.add(Mesh::new(PrimitiveTopology::TriangleList)),
+        }
     }
 }
 
@@ -30,24 +45,28 @@ impl Default for TerrainSettings {
 
 pub fn terrain_startup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
+    terrain_data: Res<TerrainMesh>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    terrain_settings: Res<TerrainSettings>,
 ) {
     commands
         .spawn_bundle(PbrBundle {
-            mesh: meshes.add(terrain_build(
-                terrain_settings.unit_count,
-                terrain_settings.unit_size,
-            )),
+            mesh: terrain_data.mesh_handle.clone(),
             material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
             ..Default::default()
         })
         .insert(Wireframe);
 }
 
-pub fn terrain_build(size: usize, unit_size: f32) -> Mesh {
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+pub fn terrain_build(
+    terrain_settings: Res<TerrainSettings>,
+    terrain_data: Res<TerrainMesh>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut tracker: ResMut<Tracker>,
+    state: ResMut<State<GenState>>,
+) {
+    let size = terrain_settings.unit_count;
+    let unit_size = terrain_settings.unit_size;
+    let mesh = meshes.get_mut(terrain_data.mesh_handle.clone()).unwrap();
 
     let mut vertices: Vec<[f32; 3]> = Vec::new();
     let mut normals: Vec<[f32; 3]> = Vec::new();
@@ -127,5 +146,5 @@ pub fn terrain_build(size: usize, unit_size: f32) -> Mesh {
     mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, VertexAttributeValues::Float3(uvs));
     mesh.set_indices(Some(Indices::U32(indices)));
 
-    mesh
+    tracker.add_progress(100., state);
 }

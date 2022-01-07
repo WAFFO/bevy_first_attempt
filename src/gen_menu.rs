@@ -255,7 +255,7 @@ fn update_button_text(
     let str = match state.current() {
         AppState::GenConfig => "Generate",
         AppState::GenRun => "Running...",
-        AppState::GenDone => "Complete!",
+        AppState::GenDone => "Done - Click to play!",
         _ => "Shouldn't be here....",
     };
 
