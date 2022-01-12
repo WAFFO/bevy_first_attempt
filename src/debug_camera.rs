@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::AppState;
 
+#[derive(Component)]
 struct DebugCamera;
 pub struct DebugCameraPlugin;
 
@@ -31,19 +32,19 @@ impl Default for CameraSettings {
 }
 
 impl Plugin for DebugCameraPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<InputState>()
             .init_resource::<CameraSettings>()
             .add_system_set(
                 SystemSet::on_enter(AppState::InGame)
-                    .with_system(setup_grab_cursor.system())
-                    .with_system(setup_camera.system()),
+                    .with_system(setup_grab_cursor)
+                    .with_system(setup_camera),
             )
             .add_system_set(
                 SystemSet::on_update(AppState::InGame)
-                    .with_system(cursor_grab.system())
-                    .with_system(camera_look.system())
-                    .with_system(camera_move.system()),
+                    .with_system(cursor_grab)
+                    .with_system(camera_look)
+                    .with_system(camera_move),
             );
     }
 }

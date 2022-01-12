@@ -1,7 +1,8 @@
+use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::prelude::*;
-use bevy::render::wireframe::{Wireframe, WireframePlugin};
-use bevy::wgpu::{WgpuFeature, WgpuFeatures, WgpuOptions};
+use bevy::render::{options::WgpuOptions, render_resource::WgpuFeatures};
 
+mod bit_image;
 mod debug_camera;
 mod game;
 mod gen_image;
@@ -25,14 +26,12 @@ enum AppState {
 }
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(WgpuOptions {
-            features: WgpuFeatures {
-                // The Wireframe requires NonFillPolygonMode feature
-                features: vec![WgpuFeature::NonFillPolygonMode],
-            },
+            features: WgpuFeatures::POLYGON_MODE_LINE,
             ..Default::default()
         })
+        .insert_resource(Msaa { samples: 4 })
         .add_state(AppState::PreGenMenu)
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
@@ -48,13 +47,14 @@ fn main() {
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(Msaa { samples: 1 })
             .add_startup_system(setup.system())
             .add_system(rotate.system());
     }
 }
 
+#[derive(Component)]
 struct Rotates;
 
 /// set up a simple 3D scene
@@ -74,7 +74,7 @@ fn setup(
         .insert(Wireframe)
         .insert(Rotates);
     // light
-    commands.spawn_bundle(LightBundle {
+    commands.spawn_bundle(PointLightBundle {
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
         ..Default::default()
     });

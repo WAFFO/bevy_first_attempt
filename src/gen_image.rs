@@ -1,27 +1,26 @@
 use bevy::{
     prelude::*,
-    render::texture::{Extent3d, TextureDimension, TextureFormat},
+    render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
 use crate::gen_menu::MenuData;
 
 pub struct ImageData {
     image_entity: Entity,
-    _image_handle: Handle<Texture>,
+    _image_handle: Handle<Image>,
 }
 
 pub fn setup_image(
     mut commands: Commands,
-    mut textures: ResMut<Assets<Texture>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut textures: ResMut<Assets<Image>>,
     menu_data: Res<MenuData>,
 ) {
     // Create a texture with varying shades of red.
-    let texture = Texture::new_fill(
+    let texture = Image::new_fill(
         Extent3d {
             width: 16,
             height: 16,
-            depth: 1,
+            depth_or_array_layers: 1,
         },
         TextureDimension::D2,
         &(0..(256))
@@ -39,7 +38,7 @@ pub fn setup_image(
                 justify_content: JustifyContent::Center,
                 ..Default::default()
             },
-            material: materials.add(Color::NONE.into()),
+            color: Color::NONE.into(),
             ..Default::default()
         })
         .with_children(|parent| {
@@ -49,7 +48,7 @@ pub fn setup_image(
                     aspect_ratio: Some(1.0),
                     ..Default::default()
                 },
-                material: materials.add(image_handle.clone().into()),
+                image: image_handle.clone().into(),
                 ..Default::default()
             });
         })

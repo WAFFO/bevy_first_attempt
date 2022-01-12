@@ -1,25 +1,27 @@
 use bevy::{
+    pbr::wireframe::Wireframe,
     prelude::*,
     render::{
         mesh::{Indices, VertexAttributeValues},
-        pipeline::PrimitiveTopology,
-        wireframe::Wireframe,
+        render_resource::PrimitiveTopology,
     },
 };
 
 use crate::gen_run::{GenState, Tracker};
 
 pub struct TerrainPlugin;
+
 pub struct TerrainSettings {
     pub unit_count: usize,
     pub unit_size: f32,
 }
+
 pub struct TerrainMesh {
     pub mesh_handle: Handle<Mesh>,
 }
 
 impl Plugin for TerrainPlugin {
-    fn build(&self, app: &mut bevy::prelude::AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<TerrainSettings>()
             .init_resource::<TerrainMesh>();
     }
@@ -77,13 +79,13 @@ pub fn terrain_build(
     vertices.resize(vertex_number, [0.0f32, 0.0f32, 0.0f32]);
     normals.resize(vertex_number, [0.0f32, 1.0f32, 0.0f32]);
     // TODO: update UV coords to correct 00, 01, 10, 11 coords
-    let uvs = vec![[0.0, 0.0, 0.0]; vertices.len()];
+    let uvs = vec![[0.0, 0.0]; vertices.len()];
 
     // vertex
     let mut vertex_index = 0;
     for cy in 0..(size + 1) {
         for cx in 0..(size + 1) {
-            // do height here
+            // do height here (debug wave)
             let h = ((cx + cy) as f32 / 4.).sin();
             vertices[vertex_index] = [cx as f32 * unit_size, h, cy as f32 * unit_size];
             vertex_index += 1;
@@ -137,13 +139,13 @@ pub fn terrain_build(
 
     mesh.set_attribute(
         Mesh::ATTRIBUTE_POSITION,
-        VertexAttributeValues::Float3(vertices),
+        VertexAttributeValues::Float32x3(vertices),
     );
     mesh.set_attribute(
         Mesh::ATTRIBUTE_NORMAL,
-        VertexAttributeValues::Float3(normals),
+        VertexAttributeValues::Float32x3(normals),
     );
-    mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, VertexAttributeValues::Float3(uvs));
+    mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, VertexAttributeValues::Float32x2(uvs));
     mesh.set_indices(Some(Indices::U32(indices)));
 
     tracker.add_progress(100., state);

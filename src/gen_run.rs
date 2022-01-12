@@ -21,24 +21,16 @@ pub struct Tracker {
 }
 
 impl Plugin for GenRunPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<Tracker>()
             .add_state(GenState::Off)
+            .add_system_set(SystemSet::on_enter(AppState::GenRun).with_system(start_generation))
+            .add_system_set(SystemSet::on_update(AppState::GenRun).with_system(update_progress_bar))
+            .add_system_set(SystemSet::on_update(GenState::Test).with_system(run_test))
+            .add_system_set(SystemSet::on_enter(GenState::TestMesh).with_system(terrain_build))
+            .add_system_set(SystemSet::on_enter(GenState::Done).with_system(end_generation))
             .add_system_set(
-                SystemSet::on_enter(AppState::GenRun).with_system(start_generation.system()),
-            )
-            .add_system_set(
-                SystemSet::on_update(AppState::GenRun).with_system(update_progress_bar.system()),
-            )
-            .add_system_set(SystemSet::on_update(GenState::Test).with_system(run_test.system()))
-            .add_system_set(
-                SystemSet::on_enter(GenState::TestMesh).with_system(terrain_build.system()),
-            )
-            .add_system_set(
-                SystemSet::on_enter(GenState::Done).with_system(end_generation.system()),
-            )
-            .add_system_set(
-                SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar.system()),
+                SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
             );
     }
 }
