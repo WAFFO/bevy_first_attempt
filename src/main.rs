@@ -2,18 +2,19 @@ use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::{options::WgpuOptions, render_resource::WgpuFeatures};
 
-mod bit_image;
 mod debug_camera;
 mod game;
 mod gen_image;
 mod gen_menu;
 mod gen_run;
+mod map_data;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
 use game::GamePlugin;
 use gen_menu::GenMenuPlugin;
 use gen_run::GenRunPlugin;
+use map_data::WorldDataPlugin;
 use terrain::TerrainPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -41,6 +42,7 @@ fn main() {
         .add_plugin(GenMenuPlugin)
         .add_plugin(GenRunPlugin)
         .add_plugin(GamePlugin)
+        .add_plugin(WorldDataPlugin)
         .run();
 }
 

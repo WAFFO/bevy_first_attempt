@@ -98,7 +98,7 @@ fn setup_menu(
                 size: Size::new(Val::Percent(100.), Val::Percent(100.)),
                 ..Default::default()
             },
-            color: Color::rgb(0.1, 0.1, 0.1).into(),
+            color: Color::rgb(0.4, 0.4, 0.4).into(),
             ..Default::default()
         })
         .insert(Parent(options_and_image_entity))

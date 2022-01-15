@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::gen_menu::ProgressBar;
+use crate::map_data::BitImage;
 use crate::terrain::terrain_build;
 use crate::AppState;
 
@@ -8,6 +9,7 @@ use crate::AppState;
 pub enum GenState {
     Off,
     Test,
+    TestHeightMap,
     TestMesh,
     Done,
 }
@@ -27,6 +29,9 @@ impl Plugin for GenRunPlugin {
             .add_system_set(SystemSet::on_enter(AppState::GenRun).with_system(start_generation))
             .add_system_set(SystemSet::on_update(AppState::GenRun).with_system(update_progress_bar))
             .add_system_set(SystemSet::on_update(GenState::Test).with_system(run_test))
+            .add_system_set(
+                SystemSet::on_enter(GenState::TestHeightMap).with_system(run_test_heightmap),
+            )
             .add_system_set(SystemSet::on_enter(GenState::TestMesh).with_system(terrain_build))
             .add_system_set(SystemSet::on_enter(GenState::Done).with_system(end_generation))
             .add_system_set(
@@ -43,6 +48,19 @@ fn start_generation(mut tracker: ResMut<Tracker>, state: ResMut<State<GenState>>
 
 fn run_test(mut tracker: ResMut<Tracker>, state: ResMut<State<GenState>>) {
     tracker.add_progress(0.1, state);
+}
+
+fn run_test_heightmap(
+    mut tracker: ResMut<Tracker>,
+    state: ResMut<State<GenState>>,
+    mut heightmap: ResMut<BitImage>,
+) {
+    heightmap.point_raise(0, 0, 0.).unwrap();
+    heightmap.point_raise(1, 1, 1.).unwrap();
+    heightmap.point_raise(2, 2, 2.).unwrap();
+    heightmap.point_raise(3, 3, 3.).unwrap();
+    heightmap.point_raise(4, 4, 4.).unwrap();
+    tracker.add_progress(100., state);
 }
 
 /////////////// end: run functions for generation
@@ -67,7 +85,8 @@ fn stage_to_state(stage: u32) -> GenState {
     match stage {
         0 => GenState::Off,
         1 => GenState::Test,
-        2 => GenState::TestMesh,
+        2 => GenState::TestHeightMap,
+        3 => GenState::TestMesh,
         _ => GenState::Done,
     }
 }

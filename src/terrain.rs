@@ -7,7 +7,10 @@ use bevy::{
     },
 };
 
-use crate::gen_run::{GenState, Tracker};
+use crate::{
+    gen_run::{GenState, Tracker},
+    map_data::BitImage,
+};
 
 pub struct TerrainPlugin;
 
@@ -50,18 +53,18 @@ pub fn terrain_startup(
     terrain_data: Res<TerrainMesh>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands
-        .spawn_bundle(PbrBundle {
-            mesh: terrain_data.mesh_handle.clone(),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-            ..Default::default()
-        })
-        .insert(Wireframe);
+    commands.spawn_bundle(PbrBundle {
+        mesh: terrain_data.mesh_handle.clone(),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        ..Default::default()
+    });
+    // .insert(Wireframe);
 }
 
 pub fn terrain_build(
     terrain_settings: Res<TerrainSettings>,
     terrain_data: Res<TerrainMesh>,
+    heightmap: Res<BitImage>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut tracker: ResMut<Tracker>,
     state: ResMut<State<GenState>>,
@@ -86,7 +89,8 @@ pub fn terrain_build(
     for cy in 0..(size + 1) {
         for cx in 0..(size + 1) {
             // do height here (debug wave)
-            let h = ((cx + cy) as f32 / 4.).sin();
+            // let h = ((cx + cy) as f32 / 4.).sin();
+            let h = heightmap.get(cx, cy).unwrap() * unit_size;
             vertices[vertex_index] = [cx as f32 * unit_size, h, cy as f32 * unit_size];
             vertex_index += 1;
         }
