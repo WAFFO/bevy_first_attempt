@@ -1,18 +1,9 @@
 use bevy::prelude::*;
 
 use crate::gen_menu::ProgressBar;
-use crate::map_data::BitImage;
-use crate::terrain::terrain_build;
+use crate::map::BitImage;
+use crate::terrain::{terrain_build, TerrainMesh, TerrainSettings};
 use crate::AppState;
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum GenState {
-    Off,
-    Test,
-    TestHeightMap,
-    TestMesh,
-    Done,
-}
 
 pub struct GenRunPlugin;
 
@@ -25,50 +16,15 @@ pub struct Tracker {
 impl Plugin for GenRunPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Tracker>()
-            .add_state(GenState::Off)
-            .add_system_set(SystemSet::on_enter(AppState::GenRun).with_system(start_generation))
-            .add_system_set(SystemSet::on_update(AppState::GenRun).with_system(update_progress_bar))
-            .add_system_set(SystemSet::on_update(GenState::Test).with_system(run_test))
             .add_system_set(
-                SystemSet::on_enter(GenState::TestHeightMap).with_system(run_test_heightmap),
+                SystemSet::on_update(AppState::GenRun)
+                    .with_system(generation_main)
+                    .with_system(update_progress_bar),
             )
-            .add_system_set(SystemSet::on_enter(GenState::TestMesh).with_system(terrain_build))
-            .add_system_set(SystemSet::on_enter(GenState::Done).with_system(end_generation))
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
             );
     }
-}
-
-fn start_generation(mut tracker: ResMut<Tracker>, state: ResMut<State<GenState>>) {
-    tracker.add_progress(100., state);
-}
-
-/////////////// start: run functions for generation
-
-fn run_test(mut tracker: ResMut<Tracker>, state: ResMut<State<GenState>>) {
-    tracker.add_progress(0.1, state);
-}
-
-fn run_test_heightmap(
-    mut tracker: ResMut<Tracker>,
-    state: ResMut<State<GenState>>,
-    mut heightmap: ResMut<BitImage>,
-) {
-    heightmap.point_raise(0, 0, 0.).unwrap();
-    heightmap.point_raise(1, 1, 1.).unwrap();
-    heightmap.point_raise(2, 2, 2.).unwrap();
-    heightmap.point_raise(3, 3, 3.).unwrap();
-    heightmap.point_raise(4, 4, 4.).unwrap();
-    tracker.add_progress(100., state);
-}
-
-/////////////// end: run functions for generation
-
-fn end_generation(mut tracker: ResMut<Tracker>, mut state: ResMut<State<AppState>>) {
-    tracker.current_step_progress = 0.;
-    tracker.current_stage = tracker.max_stage;
-    state.set(AppState::GenDone).unwrap();
 }
 
 impl Default for Tracker {
@@ -81,30 +37,64 @@ impl Default for Tracker {
     }
 }
 
-fn stage_to_state(stage: u32) -> GenState {
-    match stage {
-        0 => GenState::Off,
-        1 => GenState::Test,
-        2 => GenState::TestHeightMap,
-        3 => GenState::TestMesh,
-        _ => GenState::Done,
+/////////////// main function for generation
+
+fn generation_main(
+    tracker: ResMut<Tracker>,
+    heightmap: ResMut<BitImage>,
+    terrain_settings: Res<TerrainSettings>,
+    terrain_data: Res<TerrainMesh>,
+    meshes: ResMut<Assets<Mesh>>,
+    state: ResMut<State<AppState>>,
+) {
+    match tracker.current_stage {
+        0 => run_test(tracker),
+        1 => run_test_heightmap(tracker, heightmap),
+        2 => terrain_build(
+            terrain_settings,
+            terrain_data,
+            heightmap.as_ref(),
+            meshes,
+            tracker,
+        ),
+        _ => end_generation(tracker, state),
     }
 }
 
+/////////////// start: run functions for generation
+
+fn run_test(mut tracker: ResMut<Tracker>) {
+    tracker.add_progress(0.1);
+}
+
+fn run_test_heightmap(mut tracker: ResMut<Tracker>, mut heightmap: ResMut<BitImage>) {
+    heightmap.point_raise(0, 0, 0.).unwrap();
+    heightmap.point_raise(1, 1, 1.).unwrap();
+    heightmap.point_raise(2, 2, 2.).unwrap();
+    heightmap.point_raise(3, 3, 3.).unwrap();
+    heightmap.point_raise(4, 4, 4.).unwrap();
+    tracker.add_progress(100.);
+}
+
+fn end_generation(mut tracker: ResMut<Tracker>, mut state: ResMut<State<AppState>>) {
+    state.set(AppState::GenDone).unwrap();
+}
+
+/////////////// end: run functions for generation
+
 impl Tracker {
-    pub fn add_progress(&mut self, progress: f32, mut state: ResMut<State<GenState>>) {
+    pub fn add_progress(&mut self, progress: f32) {
         self.current_step_progress += progress;
         if self.current_step_progress >= 1.0 {
             self.current_step_progress = 0.0;
             self.current_stage += 1;
-            state.set(stage_to_state(self.current_stage)).unwrap();
         }
     }
 }
 
 fn update_progress_bar(tracker: Res<Tracker>, mut query: Query<&mut Style, With<ProgressBar>>) {
-    let c = tracker.current_stage as f32 - 1.0;
-    let m = tracker.max_stage as f32 - 1.0;
+    let c = tracker.current_stage as f32;
+    let m = tracker.max_stage as f32;
     let s = tracker.current_step_progress;
     let p = (c / m + s / m) * 100.;
     for mut style in query.iter_mut() {

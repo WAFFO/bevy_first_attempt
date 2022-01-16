@@ -1,5 +1,4 @@
 use bevy::{
-    pbr::wireframe::Wireframe,
     prelude::*,
     render::{
         mesh::{Indices, VertexAttributeValues},
@@ -7,10 +6,7 @@ use bevy::{
     },
 };
 
-use crate::{
-    gen_run::{GenState, Tracker},
-    map_data::BitImage,
-};
+use crate::{gen_run::Tracker, map::BitImage};
 
 pub struct TerrainPlugin;
 
@@ -64,10 +60,9 @@ pub fn terrain_startup(
 pub fn terrain_build(
     terrain_settings: Res<TerrainSettings>,
     terrain_data: Res<TerrainMesh>,
-    heightmap: Res<BitImage>,
+    heightmap: &BitImage,
     mut meshes: ResMut<Assets<Mesh>>,
     mut tracker: ResMut<Tracker>,
-    state: ResMut<State<GenState>>,
 ) {
     let size = terrain_settings.unit_count;
     let unit_size = terrain_settings.unit_size;
@@ -152,5 +147,5 @@ pub fn terrain_build(
     mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, VertexAttributeValues::Float32x2(uvs));
     mesh.set_indices(Some(Indices::U32(indices)));
 
-    tracker.add_progress(100., state);
+    tracker.add_progress(100.);
 }

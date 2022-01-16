@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 use crate::terrain::TerrainSettings;
 
+use super::{HeightMapIter, HeightMapNormIter};
+
 pub struct WorldDataPlugin;
 
 impl Plugin for WorldDataPlugin {
@@ -39,6 +41,14 @@ impl BitImage {
     pub fn get_normalized(&self, x: usize, y: usize) -> Result<f32, String> {
         self.check_coords(x, y)?;
         Ok(self.data[y * self.edge_size + x] / self.max_height)
+    }
+
+    pub fn get_heightmap_iter(&self) -> HeightMapIter {
+        HeightMapIter::new(&self.data)
+    }
+
+    pub fn get_heightmap_norm_iter(&self) -> HeightMapNormIter {
+        HeightMapNormIter::new(&self.data, self.max_height)
     }
 
     pub fn point_raise(&mut self, x: usize, y: usize, val: f32) -> Result<(), String> {

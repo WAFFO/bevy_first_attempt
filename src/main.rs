@@ -1,4 +1,4 @@
-use bevy::pbr::wireframe::{Wireframe, WireframePlugin};
+use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::prelude::*;
 use bevy::render::{options::WgpuOptions, render_resource::WgpuFeatures};
 
@@ -7,14 +7,14 @@ mod game;
 mod gen_image;
 mod gen_menu;
 mod gen_run;
-mod map_data;
+mod map;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
 use game::GamePlugin;
 use gen_menu::GenMenuPlugin;
 use gen_run::GenRunPlugin;
-use map_data::WorldDataPlugin;
+use map::WorldDataPlugin;
 use terrain::TerrainPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -51,8 +51,9 @@ pub struct WorldPlugin;
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Msaa { samples: 1 })
-            .add_startup_system(setup.system())
-            .add_system(rotate.system());
+            .add_startup_system(setup)
+            .add_system(rotate)
+            .add_system(toggle_wireframe);
     }
 }
 
@@ -73,7 +74,6 @@ fn setup(
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..Default::default()
         })
-        .insert(Wireframe)
         .insert(Rotates);
     // light
     commands.spawn_bundle(PointLightBundle {
@@ -85,5 +85,21 @@ fn setup(
 fn rotate(mut query: Query<&mut Transform, With<Rotates>>) {
     for mut t in query.iter_mut() {
         t.rotate(Quat::from_axis_angle(Vec3::Y, 0.1))
+    }
+}
+
+fn toggle_wireframe(
+    keys: Res<Input<KeyCode>>,
+    windows: Res<Windows>,
+    mut wireframe_config: ResMut<WireframeConfig>,
+) {
+    let window = windows.get_primary().unwrap();
+    for key in keys.get_just_pressed() {
+        if window.cursor_locked() {
+            match key {
+                KeyCode::Backslash => wireframe_config.global = !wireframe_config.global,
+                _ => (),
+            }
+        }
     }
 }
