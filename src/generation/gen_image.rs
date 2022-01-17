@@ -3,7 +3,7 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
-use crate::gen_menu::MenuData;
+use crate::generation::MenuData;
 
 pub struct ImageData {
     image_entity: Entity,

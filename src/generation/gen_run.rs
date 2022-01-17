@@ -1,9 +1,12 @@
 use bevy::prelude::*;
+use oorandom::Rand32;
 
-use crate::gen_menu::ProgressBar;
-use crate::map::BitImage;
-use crate::terrain::{terrain_build, TerrainMesh, TerrainSettings};
-use crate::AppState;
+use crate::{
+    generation::ProgressBar,
+    map::{BitImage, ReverseRain},
+    terrain::{terrain_build, TerrainMesh, TerrainSettings},
+    AppState,
+};
 
 pub struct GenRunPlugin;
 
@@ -19,7 +22,9 @@ impl Plugin for GenRunPlugin {
             .add_system_set(
                 SystemSet::on_update(AppState::GenRun)
                     .with_system(generation_main)
-                    .with_system(update_progress_bar),
+                    .with_system(update_progress_bar)
+                    .with_system(ReverseRain::run_mutate.label("rain_mut"))
+                    .with_system(ReverseRain::run_check.after("rain_mut")),
             )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
@@ -40,16 +45,19 @@ impl Default for Tracker {
 /////////////// main function for generation
 
 fn generation_main(
+    commands: Commands,
     tracker: ResMut<Tracker>,
     heightmap: ResMut<BitImage>,
     terrain_settings: Res<TerrainSettings>,
     terrain_data: Res<TerrainMesh>,
     meshes: ResMut<Assets<Mesh>>,
     state: ResMut<State<AppState>>,
+    rand: ResMut<Rand32>,
+    query: Query<&ReverseRain>,
 ) {
     match tracker.current_stage {
         0 => run_test(tracker),
-        1 => run_test_heightmap(tracker, heightmap),
+        1 => run_rain_rise(commands, query, tracker, rand),
         2 => terrain_build(
             terrain_settings,
             terrain_data,
@@ -57,7 +65,7 @@ fn generation_main(
             meshes,
             tracker,
         ),
-        _ => end_generation(tracker, state),
+        _ => end_generation(state),
     }
 }
 
@@ -67,16 +75,35 @@ fn run_test(mut tracker: ResMut<Tracker>) {
     tracker.add_progress(0.1);
 }
 
-fn run_test_heightmap(mut tracker: ResMut<Tracker>, mut heightmap: ResMut<BitImage>) {
-    heightmap.point_raise(0, 0, 0.).unwrap();
-    heightmap.point_raise(1, 1, 1.).unwrap();
-    heightmap.point_raise(2, 2, 2.).unwrap();
-    heightmap.point_raise(3, 3, 3.).unwrap();
-    heightmap.point_raise(4, 4, 4.).unwrap();
-    tracker.add_progress(100.);
+fn run_rain_rise(
+    mut commands: Commands,
+    query: Query<&ReverseRain>,
+    mut tracker: ResMut<Tracker>,
+    mut rand: ResMut<Rand32>,
+    // terrain_settings: Res<TerrainSettings>,
+) {
+    if tracker.current_step_progress < 0.99 {
+        for _ in 0..1000 {
+            commands.spawn().insert(ReverseRain::new(
+                rand.rand_range(0..200) as usize,
+                rand.rand_range(0..200) as usize,
+                0.01,
+            ));
+        }
+        tracker.add_progress(0.01);
+    } else {
+        let mut wait = false;
+        for _ in query.iter() {
+            wait = true;
+            break;
+        }
+        if !wait {
+            tracker.add_progress(0.1);
+        }
+    }
 }
 
-fn end_generation(mut tracker: ResMut<Tracker>, mut state: ResMut<State<AppState>>) {
+fn end_generation(mut state: ResMut<State<AppState>>) {
     state.set(AppState::GenDone).unwrap();
 }
 

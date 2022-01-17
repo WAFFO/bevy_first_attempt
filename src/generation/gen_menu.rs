@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
-use crate::gen_image::{cleanup_image, setup_image};
-use crate::AppState;
+use crate::{
+    generation::{cleanup_image, setup_image},
+    AppState,
+};
 
 pub struct GenMenuPlugin;
 

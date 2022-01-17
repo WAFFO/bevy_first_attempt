@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
-use crate::terrain::TerrainSettings;
-
-use super::{HeightMapIter, HeightMapNormIter};
+use crate::{
+    map::{HeightMapIter, HeightMapNormIter},
+    terrain::TerrainSettings,
+};
 
 pub struct WorldDataPlugin;
 
@@ -51,8 +52,10 @@ impl BitImage {
         HeightMapNormIter::new(&self.data, self.max_height)
     }
 
-    pub fn point_raise(&mut self, x: usize, y: usize, val: f32) -> Result<(), String> {
-        self.check_coords(x, y)?;
+    pub fn point_raise(&mut self, x: usize, y: usize, val: f32) {
+        if let Err(_) = self.check_coords(x, y) {
+            return;
+        }
 
         let c = self.data[y * self.edge_size + x] + val;
 
@@ -61,8 +64,45 @@ impl BitImage {
         }
 
         self.data[y * self.edge_size + x] = c;
+    }
 
-        Ok(())
+    pub fn neighbor_raise(&mut self, x: usize, y: usize, val: f32) {
+        let neighbors = Self::get_neighbors(x, y);
+        for coord in neighbors {
+            self.point_raise(coord.0, coord.1, val);
+        }
+    }
+
+    pub fn compare_to_neighbors<F>(&self, x: usize, y: usize, compare: F) -> Option<(usize, usize)>
+    where
+        F: Fn(&f32, &f32) -> bool,
+    {
+        let neighbors = Self::get_neighbors(x, y);
+        let mut max = self.get(x, y).unwrap();
+        let mut max_coord = None;
+        for coord in neighbors {
+            let current = self.get(coord.0, coord.1).unwrap_or_default();
+            if compare(&current, &max) {
+                max = current;
+                max_coord = Some(coord)
+            }
+        }
+        max_coord
+    }
+
+    fn get_neighbors(x: usize, y: usize) -> [(usize, usize); 8] {
+        let y0 = if y > 0 { y - 1 } else { y };
+        let x0 = if x > 0 { x - 1 } else { x };
+        [
+            (x0, y0),
+            (x, y0),
+            (x + 1, y0),
+            (x0, y),
+            (x + 1, y),
+            (x0, y + 1),
+            (x, y + 1),
+            (x + 1, y + 1),
+        ]
     }
 
     fn check_coords(&self, x: usize, y: usize) -> Result<(), String> {

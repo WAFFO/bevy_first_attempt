@@ -66,7 +66,17 @@ fn setup_camera(mut commands: Commands, mut state: ResMut<InputState>) {
             transform,
             ..Default::default()
         })
-        .insert(DebugCamera);
+        .insert(DebugCamera)
+        .with_children(|parent| {
+            parent.spawn_bundle(PointLightBundle {
+                point_light: PointLight {
+                    intensity: 3200.0,
+                    range: 400.,
+                    ..Default::default()
+                },
+                ..Default::default()
+            });
+        });
 }
 
 /// Grabs/releases mouse cursor

@@ -1,19 +1,20 @@
-use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
-use bevy::prelude::*;
-use bevy::render::{options::WgpuOptions, render_resource::WgpuFeatures};
+use bevy::{
+    pbr::wireframe::{WireframeConfig, WireframePlugin},
+    prelude::*,
+    render::{options::WgpuOptions, render_resource::WgpuFeatures},
+};
+use oorandom::Rand32;
 
 mod debug_camera;
 mod game;
-mod gen_image;
-mod gen_menu;
-mod gen_run;
+mod generation;
 mod map;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
 use game::GamePlugin;
-use gen_menu::GenMenuPlugin;
-use gen_run::GenRunPlugin;
+use generation::GenMenuPlugin;
+use generation::GenRunPlugin;
 use map::WorldDataPlugin;
 use terrain::TerrainPlugin;
 
@@ -33,6 +34,7 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(Msaa { samples: 4 })
+        .insert_resource(Rand32::new(440))
         .add_state(AppState::PreGenMenu)
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)

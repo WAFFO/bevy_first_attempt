@@ -6,7 +6,7 @@ use bevy::{
     },
 };
 
-use crate::{gen_run::Tracker, map::BitImage};
+use crate::{generation::Tracker, map::BitImage};
 
 pub struct TerrainPlugin;
 
