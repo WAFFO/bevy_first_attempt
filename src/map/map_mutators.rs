@@ -109,8 +109,9 @@ impl PlasmaSquare {
             let avg2 = (x2y1 + x2y2) / 2.; // right
             let avg3 = (x1y2 + x2y2) / 2.; // bottom
             let avg4 = (x1y1 + x1y2) / 2.; // left
-            let avg5 =
-                (x1y1 + x1y2 + x2y1 + x2y2) / 4. + (rand.rand_float() - rand.rand_float()) * scale; // middle
+            let range = (x2 - x1) as f32 / 2.;
+            let dist = rand.rand_float() * range - rand.rand_float() * range;
+            let avg5 = (x1y1 + x1y2 + x2y1 + x2y2) / 4. + dist; // middle
             height_map.point_set(xa, y1, avg1);
             height_map.point_set(x2, ya, avg2);
             height_map.point_set(xa, y2, avg3);
