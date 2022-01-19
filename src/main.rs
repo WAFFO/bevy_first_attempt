@@ -78,8 +78,11 @@ fn setup(
         })
         .insert(Rotates);
     // light
-    commands.spawn_bundle(PointLightBundle {
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+    commands.spawn_bundle(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: false,
+            ..Default::default()
+        },
         ..Default::default()
     });
 }
