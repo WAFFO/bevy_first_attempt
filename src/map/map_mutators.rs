@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use oorandom::Rand32;
+use std::collections::LinkedList;
 
 use crate::map::BitImage;
 
@@ -73,43 +74,23 @@ impl PlasmaSquare {
         scale: f32,
     ) {
         let mut count = 0;
-        let mut stack = Vec::new();
-        stack.push(first_quad);
-        while stack.len() > 0 {
+        let mut queue = LinkedList::new();
+        queue.push_back(first_quad);
+        while !queue.is_empty() {
             count += 1;
-            let quad = stack.pop().unwrap();
+            let quad = queue.pop_front().unwrap(); // stack.remove(0);
             let (x1, y1, x2, y2) = (quad.x1, quad.y1, quad.x2, quad.y2);
             let xa = x1 + (x2 - x1) / 2;
             let ya = y1 + (y2 - y1) / 2;
-            let x1y1 = height_map.getX(x1, y1);
-            let x2y1 = height_map.getX(x2, y1);
-            let x1y2 = height_map.getX(x1, y2);
-            let x2y2 = height_map.getX(x2, y2);
-            // let x1y1 = if x1y1 == 0. {
-            //     rand.rand_float() * 10.
-            // } else {
-            //     x1y1
-            // };
-            // let x2y1 = if x2y1 == 0. {
-            //     rand.rand_float() * 10.
-            // } else {
-            //     x2y1
-            // };
-            // let x1y2 = if x1y2 == 0. {
-            //     rand.rand_float() * 10.
-            // } else {
-            //     x1y2
-            // };
-            // let x2y2 = if x2y2 == 0. {
-            //     rand.rand_float() * 10.
-            // } else {
-            //     x2y2
-            // };
+            let x1y1 = height_map.get_ignore(x1, y1);
+            let x2y1 = height_map.get_ignore(x2, y1);
+            let x1y2 = height_map.get_ignore(x1, y2);
+            let x2y2 = height_map.get_ignore(x2, y2);
             let avg1 = (x1y1 + x2y1) / 2.; // top
             let avg2 = (x2y1 + x2y2) / 2.; // right
             let avg3 = (x1y2 + x2y2) / 2.; // bottom
             let avg4 = (x1y1 + x1y2) / 2.; // left
-            let range = (x2 - x1) as f32 / 2.;
+            let range = (x2 - x1) as f32 / 4.;
             let dist = rand.rand_float() * range - rand.rand_float() * range;
             let avg5 = (x1y1 + x1y2 + x2y1 + x2y2) / 4. + dist; // middle
             height_map.point_set(xa, y1, avg1);
@@ -118,25 +99,25 @@ impl PlasmaSquare {
             height_map.point_set(x1, ya, avg4);
             height_map.point_set(xa, ya, avg5);
             if xa > x1 && ya > y1 {
-                stack.push(PlasmaSquare {
+                queue.push_back(PlasmaSquare {
                     x1,
                     y1,
                     x2: xa,
                     y2: ya,
                 });
-                stack.push(PlasmaSquare {
+                queue.push_back(PlasmaSquare {
                     x1: xa,
                     y1,
                     x2,
                     y2: ya,
                 });
-                stack.push(PlasmaSquare {
+                queue.push_back(PlasmaSquare {
                     x1: xa,
                     y1: ya,
                     x2,
                     y2,
                 });
-                stack.push(PlasmaSquare {
+                queue.push_back(PlasmaSquare {
                     x1,
                     y1: ya,
                     x2: xa,

@@ -39,7 +39,7 @@ impl BitImage {
         Ok(self.data[y * self.edge_size + x] as f32)
     }
 
-    pub fn getX(&self, x: usize, y: usize) -> f32 {
+    pub fn get_ignore(&self, x: usize, y: usize) -> f32 {
         self.get(x, y).unwrap_or_default()
     }
 
