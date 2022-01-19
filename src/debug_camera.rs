@@ -144,7 +144,7 @@ fn camera_move(
                     KeyCode::D => velocity += right,
                     KeyCode::R => velocity += Vec3::Y,
                     KeyCode::F => velocity -= Vec3::Y,
-                    KeyCode::LShift => sprint = 4.,
+                    KeyCode::LShift => sprint = 10.,
                     _ => (),
                 }
             }

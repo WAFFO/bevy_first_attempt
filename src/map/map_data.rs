@@ -39,6 +39,10 @@ impl BitImage {
         Ok(self.data[y * self.edge_size + x] as f32)
     }
 
+    pub fn getX(&self, x: usize, y: usize) -> f32 {
+        self.get(x, y).unwrap_or_default()
+    }
+
     pub fn get_normalized(&self, x: usize, y: usize) -> Result<f32, String> {
         self.check_coords(x, y)?;
         Ok(self.data[y * self.edge_size + x] / self.max_height)
@@ -64,6 +68,19 @@ impl BitImage {
         }
 
         self.data[y * self.edge_size + x] = c;
+    }
+
+    pub fn point_set(&mut self, x: usize, y: usize, val: f32) {
+        if let Err(e) = self.check_coords(x, y) {
+            println!("{}", e);
+            return;
+        }
+
+        if val > self.max_height {
+            self.max_height = val;
+        }
+
+        self.data[y * self.edge_size + x] = val;
     }
 
     pub fn neighbor_raise(&mut self, x: usize, y: usize, val: f32) {

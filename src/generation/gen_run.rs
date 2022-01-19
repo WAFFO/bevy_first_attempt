@@ -3,7 +3,7 @@ use oorandom::Rand32;
 
 use crate::{
     generation::ProgressBar,
-    map::{BitImage, ReverseRain},
+    map::{BitImage, PlasmaSquare, ReverseRain},
     terrain::{terrain_build, TerrainMesh, TerrainSettings},
     AppState,
 };
@@ -21,10 +21,9 @@ impl Plugin for GenRunPlugin {
         app.init_resource::<Tracker>()
             .add_system_set(
                 SystemSet::on_update(AppState::GenRun)
-                    .with_system(generation_main)
+                    .with_system(generation_main.after("priority"))
                     .with_system(update_progress_bar)
-                    .with_system(ReverseRain::run_mutate.label("rain_mut"))
-                    .with_system(ReverseRain::run_check.after("rain_mut")),
+                    .with_system(PlasmaSquare::run_mutate.label("priority")),
             )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
@@ -53,12 +52,13 @@ fn generation_main(
     meshes: ResMut<Assets<Mesh>>,
     state: ResMut<State<AppState>>,
     rand: ResMut<Rand32>,
-    query: Query<&ReverseRain>,
+    query: Query<&PlasmaSquare>,
 ) {
     match tracker.current_stage {
         0 => run_test(tracker),
-        1 => run_rain_rise(commands, query, tracker, rand),
-        2 => terrain_build(
+        1 => run_plasma_setup(commands, heightmap, rand, terrain_settings, tracker),
+        2 => run_plasma_wait(tracker, query),
+        3 => terrain_build(
             terrain_settings,
             terrain_data,
             heightmap.as_ref(),
@@ -75,31 +75,31 @@ fn run_test(mut tracker: ResMut<Tracker>) {
     tracker.add_progress(0.1);
 }
 
-fn run_rain_rise(
+fn run_plasma_setup(
     mut commands: Commands,
-    query: Query<&ReverseRain>,
-    mut tracker: ResMut<Tracker>,
+    mut heightmap: ResMut<BitImage>,
     mut rand: ResMut<Rand32>,
-    // terrain_settings: Res<TerrainSettings>,
+    terrain_settings: Res<TerrainSettings>,
+    mut tracker: ResMut<Tracker>,
 ) {
-    if tracker.current_step_progress < 0.99 {
-        for _ in 0..1000 {
-            commands.spawn().insert(ReverseRain::new(
-                rand.rand_range(0..200) as usize,
-                rand.rand_range(0..200) as usize,
-                0.01,
-            ));
-        }
-        tracker.add_progress(0.01);
-    } else {
-        let mut wait = false;
-        for _ in query.iter() {
-            wait = true;
-            break;
-        }
-        if !wait {
-            tracker.add_progress(0.1);
-        }
+    let s = terrain_settings.unit_count;
+    let quad = PlasmaSquare::new(0, 0, s, s);
+    heightmap.point_set(0, 0, rand.rand_float() * 10.);
+    heightmap.point_set(0, s, rand.rand_float() * 10.);
+    heightmap.point_set(s, 0, rand.rand_float() * 10.);
+    heightmap.point_set(s, s, rand.rand_float() * 10.);
+    commands.spawn().insert(quad);
+    tracker.add_progress(100.);
+}
+
+fn run_plasma_wait(mut tracker: ResMut<Tracker>, query: Query<&PlasmaSquare>) {
+    let mut done = true;
+    for _ in query.iter() {
+        done = false;
+        break;
+    }
+    if done {
+        tracker.add_progress(100.);
     }
 }
 
