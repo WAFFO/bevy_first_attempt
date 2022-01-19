@@ -34,7 +34,7 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(Rand32::new(440))
+        .insert_resource(Rand32::new(420))
         .add_state(AppState::PreGenMenu)
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)

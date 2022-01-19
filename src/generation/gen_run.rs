@@ -84,7 +84,7 @@ fn run_plasma_setup(
     heightmap.point_set(0, s, rand.rand_float() * scale);
     heightmap.point_set(s, 0, rand.rand_float() * scale);
     heightmap.point_set(s, s, rand.rand_float() * scale);
-    PlasmaSquare::run_mutate(heightmap, quad, rand, scale);
+    PlasmaSquare::run_mutate(heightmap, quad, rand);
     tracker.add_progress(100.);
 }
 

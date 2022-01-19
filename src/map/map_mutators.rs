@@ -71,7 +71,6 @@ impl PlasmaSquare {
         mut height_map: ResMut<BitImage>,
         first_quad: PlasmaSquare,
         mut rand: ResMut<Rand32>,
-        scale: f32,
     ) {
         let mut count = 0;
         let mut queue = LinkedList::new();
@@ -86,11 +85,18 @@ impl PlasmaSquare {
             let x2y1 = height_map.get_ignore(x2, y1);
             let x1y2 = height_map.get_ignore(x1, y2);
             let x2y2 = height_map.get_ignore(x2, y2);
-            let avg1 = (x1y1 + x2y1) / 2.; // top
-            let avg2 = (x2y1 + x2y2) / 2.; // right
-            let avg3 = (x1y2 + x2y2) / 2.; // bottom
-            let avg4 = (x1y1 + x1y2) / 2.; // left
             let range = (x2 - x1) as f32 / 4.;
+            let range2 = range / 2.;
+            let d_array = [
+                rand.rand_float() * range2 - rand.rand_float() * range2,
+                rand.rand_float() * range2 - rand.rand_float() * range2,
+                rand.rand_float() * range2 - rand.rand_float() * range2,
+                rand.rand_float() * range2 - rand.rand_float() * range2,
+            ];
+            let avg1 = (x1y1 + x2y1) / 2. + d_array[0]; // top
+            let avg2 = (x2y1 + x2y2) / 2. + d_array[1]; // right
+            let avg3 = (x1y2 + x2y2) / 2. + d_array[2]; // bottom
+            let avg4 = (x1y1 + x1y2) / 2. + d_array[3]; // left
             let dist = rand.rand_float() * range - rand.rand_float() * range;
             let avg5 = (x1y1 + x1y2 + x2y1 + x2y2) / 4. + dist; // middle
             height_map.point_set(xa, y1, avg1);
