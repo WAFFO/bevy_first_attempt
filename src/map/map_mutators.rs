@@ -54,7 +54,6 @@ impl ReverseRain {
     }
 }
 
-#[derive(Component)]
 pub struct PlasmaSquare {
     pub x1: usize,
     pub y1: usize,
@@ -68,17 +67,20 @@ impl PlasmaSquare {
     }
 
     pub fn run_mutate(
-        mut commands: Commands,
         mut height_map: ResMut<BitImage>,
-        query: Query<(&PlasmaSquare, Entity)>,
+        first_quad: PlasmaSquare,
         mut rand: ResMut<Rand32>,
+        scale: f32,
     ) {
         let mut count = 0;
-        for (quad, entity) in query.iter() {
+        let mut stack = Vec::new();
+        stack.push(first_quad);
+        while stack.len() > 0 {
             count += 1;
+            let quad = stack.pop().unwrap();
             let (x1, y1, x2, y2) = (quad.x1, quad.y1, quad.x2, quad.y2);
-            let xa = (x2 - x1) / 2;
-            let ya = (y2 - y1) / 2;
+            let xa = x1 + (x2 - x1) / 2;
+            let ya = y1 + (y2 - y1) / 2;
             let x1y1 = height_map.getX(x1, y1);
             let x2y1 = height_map.getX(x2, y1);
             let x1y2 = height_map.getX(x1, y2);
@@ -103,43 +105,43 @@ impl PlasmaSquare {
             // } else {
             //     x2y2
             // };
-            let avg1 = (x1y1 + x2y1) / 2.;
-            let avg2 = (x2y1 + x2y2) / 2.;
-            let avg3 = (x1y2 + x2y2) / 2.;
-            let avg4 = (x1y1 + x1y2) / 2.;
-            let avg5 = (x1y1 + x1y2 + x2y1 + x2y2) / 4.;
+            let avg1 = (x1y1 + x2y1) / 2.; // top
+            let avg2 = (x2y1 + x2y2) / 2.; // right
+            let avg3 = (x1y2 + x2y2) / 2.; // bottom
+            let avg4 = (x1y1 + x1y2) / 2.; // left
+            let avg5 =
+                (x1y1 + x1y2 + x2y1 + x2y2) / 4. + (rand.rand_float() - rand.rand_float()) * scale; // middle
             height_map.point_set(xa, y1, avg1);
             height_map.point_set(x2, ya, avg2);
             height_map.point_set(xa, y2, avg3);
             height_map.point_set(x1, ya, avg4);
             height_map.point_set(xa, ya, avg5);
             if xa > x1 && ya > y1 {
-                commands.spawn().insert(PlasmaSquare {
+                stack.push(PlasmaSquare {
                     x1,
                     y1,
                     x2: xa,
                     y2: ya,
                 });
-                commands.spawn().insert(PlasmaSquare {
+                stack.push(PlasmaSquare {
                     x1: xa,
                     y1,
                     x2,
                     y2: ya,
                 });
-                commands.spawn().insert(PlasmaSquare {
+                stack.push(PlasmaSquare {
                     x1: xa,
                     y1: ya,
                     x2,
                     y2,
                 });
-                commands.spawn().insert(PlasmaSquare {
+                stack.push(PlasmaSquare {
                     x1,
                     y1: ya,
                     x2: xa,
                     y2,
                 });
             }
-            commands.entity(entity).despawn();
         }
         println!("{} rectangles", count);
     }

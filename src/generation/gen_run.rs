@@ -3,7 +3,7 @@ use oorandom::Rand32;
 
 use crate::{
     generation::ProgressBar,
-    map::{BitImage, PlasmaSquare, ReverseRain},
+    map::{BitImage, PlasmaSquare},
     terrain::{terrain_build, TerrainMesh, TerrainSettings},
     AppState,
 };
@@ -21,9 +21,8 @@ impl Plugin for GenRunPlugin {
         app.init_resource::<Tracker>()
             .add_system_set(
                 SystemSet::on_update(AppState::GenRun)
-                    .with_system(generation_main.after("priority"))
-                    .with_system(update_progress_bar)
-                    .with_system(PlasmaSquare::run_mutate.label("priority")),
+                    .with_system(generation_main)
+                    .with_system(update_progress_bar),
             )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
@@ -44,7 +43,6 @@ impl Default for Tracker {
 /////////////// main function for generation
 
 fn generation_main(
-    commands: Commands,
     tracker: ResMut<Tracker>,
     heightmap: ResMut<BitImage>,
     terrain_settings: Res<TerrainSettings>,
@@ -52,13 +50,11 @@ fn generation_main(
     meshes: ResMut<Assets<Mesh>>,
     state: ResMut<State<AppState>>,
     rand: ResMut<Rand32>,
-    query: Query<&PlasmaSquare>,
 ) {
     match tracker.current_stage {
         0 => run_test(tracker),
-        1 => run_plasma_setup(commands, heightmap, rand, terrain_settings, tracker),
-        2 => run_plasma_wait(tracker, query),
-        3 => terrain_build(
+        1 => run_plasma_setup(heightmap, rand, terrain_settings, tracker),
+        2 => terrain_build(
             terrain_settings,
             terrain_data,
             heightmap.as_ref(),
@@ -76,7 +72,6 @@ fn run_test(mut tracker: ResMut<Tracker>) {
 }
 
 fn run_plasma_setup(
-    mut commands: Commands,
     mut heightmap: ResMut<BitImage>,
     mut rand: ResMut<Rand32>,
     terrain_settings: Res<TerrainSettings>,
@@ -84,23 +79,13 @@ fn run_plasma_setup(
 ) {
     let s = terrain_settings.unit_count;
     let quad = PlasmaSquare::new(0, 0, s, s);
-    heightmap.point_set(0, 0, rand.rand_float() * 10.);
-    heightmap.point_set(0, s, rand.rand_float() * 10.);
-    heightmap.point_set(s, 0, rand.rand_float() * 10.);
-    heightmap.point_set(s, s, rand.rand_float() * 10.);
-    commands.spawn().insert(quad);
+    let scale = 10.;
+    heightmap.point_set(0, 0, rand.rand_float() * scale);
+    heightmap.point_set(0, s, rand.rand_float() * scale);
+    heightmap.point_set(s, 0, rand.rand_float() * scale);
+    heightmap.point_set(s, s, rand.rand_float() * scale);
+    PlasmaSquare::run_mutate(heightmap, quad, rand, scale);
     tracker.add_progress(100.);
-}
-
-fn run_plasma_wait(mut tracker: ResMut<Tracker>, query: Query<&PlasmaSquare>) {
-    let mut done = true;
-    for _ in query.iter() {
-        done = false;
-        break;
-    }
-    if done {
-        tracker.add_progress(100.);
-    }
 }
 
 fn end_generation(mut state: ResMut<State<AppState>>) {
