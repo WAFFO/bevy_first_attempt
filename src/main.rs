@@ -34,7 +34,7 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(Rand32::new(420))
+        .insert_resource(Rand32::new(0))
         .add_state(AppState::PreGenMenu)
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
@@ -83,6 +83,7 @@ fn setup(
             shadows_enabled: false,
             ..Default::default()
         },
+        transform: Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI * -0.75)),
         ..Default::default()
     });
 }

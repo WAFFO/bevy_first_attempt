@@ -95,7 +95,7 @@ pub fn terrain_build(
     let grid_width = size as u32 + 1;
     for cy in 0..(size as u32) {
         for cx in 0..(size as u32) {
-            let ltr = (cx + cy + 1) % 2;
+            let ltr = 1; //(cx + cy + 1) % 2;
             let rtl = ltr ^ 1;
             indices.extend(
                 [

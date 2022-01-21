@@ -21,8 +21,8 @@ impl Plugin for GenRunPlugin {
         app.init_resource::<Tracker>()
             .add_system_set(
                 SystemSet::on_update(AppState::GenRun)
-                    .with_system(generation_main)
-                    .with_system(update_progress_bar),
+                    .with_system(generation_main.before("last"))
+                    .with_system(update_progress_bar.label("last")),
             )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
