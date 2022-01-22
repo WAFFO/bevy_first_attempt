@@ -6,8 +6,8 @@ use bevy::{
 use crate::{generation::MenuData, terrain::TerrainSettings};
 
 pub struct ImageData {
-    image_entity: Entity,
-    _image_handle: Handle<Image>,
+    pub image_entity: Entity,
+    pub image_handle: Handle<Image>,
 }
 
 pub fn setup_image(
@@ -17,7 +17,7 @@ pub fn setup_image(
     // height_map: Res<BitImage>,
     terrain_settings: Res<TerrainSettings>,
 ) {
-    let size = terrain_settings.unit_count as u32;
+    let size = terrain_settings.unit_count as u32 + 1;
     // let size = 32;
     let texture = Image::new_fill(
         Extent3d {
@@ -74,7 +74,7 @@ pub fn setup_image(
         .id();
     commands.insert_resource(ImageData {
         image_entity,
-        _image_handle: image_handle,
+        image_handle: image_handle,
     });
 }
 

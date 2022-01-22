@@ -12,6 +12,7 @@ pub struct ReverseRain {
     next_coords: Option<(usize, usize)>,
 }
 
+#[allow(dead_code)]
 impl ReverseRain {
     pub fn new(x: usize, y: usize, strength: f32) -> Self {
         ReverseRain {

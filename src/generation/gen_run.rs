@@ -8,6 +8,8 @@ use crate::{
     AppState,
 };
 
+use super::ImageData;
+
 pub struct GenRunPlugin;
 
 pub struct Tracker {
@@ -22,7 +24,8 @@ impl Plugin for GenRunPlugin {
             .add_system_set(
                 SystemSet::on_update(AppState::GenRun)
                     .with_system(generation_main.before("last"))
-                    .with_system(update_progress_bar.label("last")),
+                    .with_system(update_progress_bar.label("last"))
+                    .with_system(update_image.label("last")),
             )
             .add_system_set(
                 SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
@@ -111,5 +114,16 @@ fn update_progress_bar(tracker: Res<Tracker>, mut query: Query<&mut Style, With<
     let p = (c / m + s / m) * 100.;
     for mut style in query.iter_mut() {
         style.size.width = Val::Percent(p);
+    }
+}
+
+fn update_image(
+    image_handle: Res<ImageData>,
+    mut images: ResMut<Assets<Image>>,
+    height_map: Res<BitImage>,
+) {
+    let image = images.get_mut(&image_handle.image_handle);
+    if let Some(img) = image {
+        img.data.clone_from(&height_map.convert_to_rgba());
     }
 }

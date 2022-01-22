@@ -21,6 +21,7 @@ pub struct BitImage {
     data: Vec<f32>,
     edge_size: usize,
     max_height: f32,
+    min_height: f32,
 }
 
 #[allow(dead_code)]
@@ -31,6 +32,7 @@ impl BitImage {
             data: vec![0.; len * len],
             edge_size: len,
             max_height: 0.,
+            min_height: 0.,
         }
     }
 
@@ -45,7 +47,8 @@ impl BitImage {
 
     pub fn get_normalized(&self, x: usize, y: usize) -> Result<f32, String> {
         self.check_coords(x, y)?;
-        Ok(self.data[y * self.edge_size + x] / self.max_height)
+        Ok((self.data[y * self.edge_size + x] - self.min_height)
+            / (self.max_height - self.min_height))
     }
 
     pub fn get_heightmap_iter(&self) -> HeightMapIter {
@@ -53,7 +56,7 @@ impl BitImage {
     }
 
     pub fn get_heightmap_norm_iter(&self) -> HeightMapNormIter {
-        HeightMapNormIter::new(&self.data, self.max_height)
+        HeightMapNormIter::new(&self.data, self.max_height, self.min_height)
     }
 
     pub fn point_raise(&mut self, x: usize, y: usize, val: f32) {
@@ -65,6 +68,8 @@ impl BitImage {
 
         if c > self.max_height {
             self.max_height = c;
+        } else if c < self.min_height {
+            self.min_height = c;
         }
 
         self.data[y * self.edge_size + x] = c;
@@ -78,6 +83,8 @@ impl BitImage {
 
         if val > self.max_height {
             self.max_height = val;
+        } else if val < self.min_height {
+            self.min_height = val;
         }
 
         self.data[y * self.edge_size + x] = val;
@@ -140,9 +147,17 @@ impl BitImage {
     }
 
     // TODO :(
-    pub fn convert_rgba(&self, width: usize, height: usize) -> Vec<u8> {
-        let vec = vec![0; width * height];
+    pub fn convert_to_rgba(&self) -> Vec<u8> {
+        let mut vec = vec![0; self.edge_size * self.edge_size * 4];
 
+        for (i, data) in self.get_heightmap_norm_iter().enumerate() {
+            let idx = i * 4;
+            let val = (data * 255.) as u8;
+            vec[idx] = val;
+            vec[idx + 1] = val;
+            vec[idx + 2] = val;
+            vec[idx + 3] = 255;
+        }
         vec
     }
 }
