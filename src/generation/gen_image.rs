@@ -18,7 +18,7 @@ pub fn setup_image(
     terrain_settings: Res<TerrainSettings>,
 ) {
     let size = terrain_settings.unit_count as u32;
-    // Create a texture with varying shades of red.
+    // let size = 32;
     let texture = Image::new_fill(
         Extent3d {
             width: size,
@@ -27,7 +27,12 @@ pub fn setup_image(
         },
         TextureDimension::D2,
         &(0..(size * size))
-            .flat_map(|i| vec![0, (i % 255) as u8, 0, 255])
+            .flat_map(|i| {
+                let x = i % size as u32;
+                let y = i / size as u32;
+                let v = if x == y || size - x == y { 255u8 } else { 0u8 };
+                vec![v, v, v, 255]
+            })
             .collect::<Vec<u8>>(),
         TextureFormat::Rgba8UnormSrgb,
     );
@@ -37,9 +42,11 @@ pub fn setup_image(
     let image_entity = commands
         .spawn_bundle(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(100.0), Val::Percent(100.)),
-                justify_content: JustifyContent::Center,
+                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
                 max_size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                flex_wrap: FlexWrap::Wrap,
+                align_content: AlignContent::Center,
+                justify_content: JustifyContent::Center,
                 ..Default::default()
             },
             color: Color::NONE.into(),
@@ -49,9 +56,13 @@ pub fn setup_image(
             parent.spawn_bundle(ImageBundle {
                 style: Style {
                     size: Size::new(Val::Auto, Val::Percent(100.)),
+                    margin: Rect {
+                        left: Val::Auto,
+                        right: Val::Auto,
+                        top: Val::Px(0.),
+                        bottom: Val::Px(0.),
+                    },
                     aspect_ratio: Some(1.0),
-                    flex_shrink: 0.001,
-                    flex_basis: Val::Percent(100.),
                     overflow: Overflow::Hidden,
                     ..Default::default()
                 },
