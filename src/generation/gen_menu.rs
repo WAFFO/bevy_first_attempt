@@ -45,8 +45,9 @@ pub struct ProgressBar;
 #[derive(Component)]
 pub struct GenerateButtonText;
 
-const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
+pub const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
+pub const HOVERED_BUTTON: Color = Color::rgb(0.65, 0.65, 0.65);
+pub const PRESSED_BUTTON: Color = Color::rgb(0.85, 0.85, 0.85);
 
 const PROG_BAR_NORMAL_BUTTON: Color = Color::rgb(0., 0.60, 0.);
 const PROG_BAR_HOVERED_BUTTON: Color = Color::rgb(0., 0.85, 0.);

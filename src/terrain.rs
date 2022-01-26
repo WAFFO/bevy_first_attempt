@@ -55,6 +55,7 @@ pub fn terrain_startup(
             base_color: Color::rgb(0.3, 0.5, 0.3),
             metallic: 0.,
             reflectance: 0.1,
+            perceptual_roughness: 0.9,
             ..Default::default()
         }),
         ..Default::default()

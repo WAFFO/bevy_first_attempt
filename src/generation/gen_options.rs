@@ -1,16 +1,16 @@
 use bevy::prelude::*;
 
-use crate::{generation::MenuData, randstruct::RandStruct, AppState};
+use crate::{
+    generation::{MenuData, HOVERED_BUTTON, NORMAL_BUTTON, PRESSED_BUTTON},
+    randstruct::RandStruct,
+    AppState,
+};
 
 #[derive(Component)]
 pub struct ResetSeedButton;
 
 #[derive(Component)]
 pub struct SeedText;
-
-const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::rgb(0.5, 0.5, 0.5);
 
 pub fn setup_options(
     mut commands: Commands,
