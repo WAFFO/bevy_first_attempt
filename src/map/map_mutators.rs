@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use oorandom::Rand32;
 use std::collections::LinkedList;
 
 use crate::map::BitImage;
+use crate::randstruct::RandStruct;
 
 #[derive(Component)]
 pub struct ReverseRain {
@@ -71,7 +71,7 @@ impl PlasmaSquare {
     pub fn run_mutate(
         mut height_map: ResMut<BitImage>,
         first_quad: PlasmaSquare,
-        mut rand: ResMut<Rand32>,
+        mut rand: ResMut<RandStruct>,
     ) {
         let mut count = 0;
         let mut queue = LinkedList::new();
@@ -89,16 +89,16 @@ impl PlasmaSquare {
             let range = (x2 - x1) as f32 / 4.;
             let range2 = range / 2.;
             let d_array = [
-                rand.rand_float() * range2 - rand.rand_float() * range2,
-                rand.rand_float() * range2 - rand.rand_float() * range2,
-                rand.rand_float() * range2 - rand.rand_float() * range2,
-                rand.rand_float() * range2 - rand.rand_float() * range2,
+                rand.get_map_float() * range2 - rand.get_map_float() * range2,
+                rand.get_map_float() * range2 - rand.get_map_float() * range2,
+                rand.get_map_float() * range2 - rand.get_map_float() * range2,
+                rand.get_map_float() * range2 - rand.get_map_float() * range2,
             ];
             let avg1 = (x1y1 + x2y1) / 2. + d_array[0]; // top
             let avg2 = (x2y1 + x2y2) / 2. + d_array[1]; // right
             let avg3 = (x1y2 + x2y2) / 2. + d_array[2]; // bottom
             let avg4 = (x1y1 + x1y2) / 2. + d_array[3]; // left
-            let dist = rand.rand_float() * range - rand.rand_float() * range;
+            let dist = rand.get_map_float() * range - rand.get_map_float() * range;
             let avg5 = (x1y1 + x1y2 + x2y1 + x2y2) / 4. + dist; // middle
             height_map.point_set(xa, y1, avg1);
             height_map.point_set(x2, ya, avg2);

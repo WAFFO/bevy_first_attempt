@@ -45,14 +45,6 @@ impl Iterator for HeightMapNormIter<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         let r = if self.index < self.array.len() {
             let v = (self.array[self.index] - self.min) / (self.max - self.min);
-            if self.max != 0.
-                && (self.max == self.array[self.index] || self.min == self.array[self.index])
-            {
-                println!(
-                    "in: {}, out: {}, min: {}, max: {}",
-                    self.array[self.index], v, self.min, self.max
-                );
-            }
             Some(v)
         } else {
             None

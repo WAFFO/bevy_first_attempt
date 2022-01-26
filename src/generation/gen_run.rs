@@ -1,11 +1,10 @@
 use bevy::prelude::*;
-use oorandom::Rand32;
 
 use crate::{
     generation::ProgressBar,
     map::{BitImage, PlasmaSquare},
     terrain::{terrain_build, TerrainMesh, TerrainSettings},
-    AppState,
+    AppState, RandStruct,
 };
 
 use super::ImageData;
@@ -27,9 +26,8 @@ impl Plugin for GenRunPlugin {
                     .with_system(update_progress_bar.label("last"))
                     .with_system(update_image.label("last")),
             )
-            .add_system_set(
-                SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar),
-            );
+            .add_system_set(SystemSet::on_enter(AppState::GenDone).with_system(update_progress_bar))
+            .add_system_set(SystemSet::on_exit(AppState::GenDone).with_system(reset_tracker));
     }
 }
 
@@ -52,7 +50,7 @@ fn generation_main(
     terrain_data: Res<TerrainMesh>,
     meshes: ResMut<Assets<Mesh>>,
     state: ResMut<State<AppState>>,
-    rand: ResMut<Rand32>,
+    rand: ResMut<RandStruct>,
 ) {
     match tracker.current_stage {
         0 => run_test(tracker),
@@ -71,22 +69,22 @@ fn generation_main(
 /////////////// start: run functions for generation
 
 fn run_test(mut tracker: ResMut<Tracker>) {
-    tracker.add_progress(0.1);
+    tracker.add_progress(100.);
 }
 
 fn run_plasma_setup(
     mut heightmap: ResMut<BitImage>,
-    mut rand: ResMut<Rand32>,
+    mut rand: ResMut<RandStruct>,
     terrain_settings: Res<TerrainSettings>,
     mut tracker: ResMut<Tracker>,
 ) {
     let s = terrain_settings.unit_count;
     let quad = PlasmaSquare::new(0, 0, s, s);
     let scale = 10.;
-    heightmap.point_set(0, 0, rand.rand_float() * scale);
-    heightmap.point_set(0, s, rand.rand_float() * scale);
-    heightmap.point_set(s, 0, rand.rand_float() * scale);
-    heightmap.point_set(s, s, rand.rand_float() * scale);
+    heightmap.point_set(0, 0, rand.get_map_float() * scale);
+    heightmap.point_set(0, s, rand.get_map_float() * scale);
+    heightmap.point_set(s, 0, rand.get_map_float() * scale);
+    heightmap.point_set(s, s, rand.get_map_float() * scale);
     PlasmaSquare::run_mutate(heightmap, quad, rand);
     tracker.add_progress(100.);
 }
@@ -126,4 +124,9 @@ fn update_image(
     if let Some(img) = image {
         img.data.clone_from(&height_map.convert_to_rgba());
     }
+}
+
+fn reset_tracker(mut tracker: ResMut<Tracker>) {
+    tracker.current_stage = 0;
+    tracker.current_step_progress = 0.;
 }

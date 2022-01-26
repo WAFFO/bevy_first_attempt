@@ -36,6 +36,10 @@ impl BitImage {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.data.fill(0.);
+    }
+
     pub fn get(&self, x: usize, y: usize) -> Result<f32, String> {
         self.check_coords(x, y)?;
         Ok(self.data[y * self.edge_size + x] as f32)
@@ -146,17 +150,24 @@ impl BitImage {
         Ok(())
     }
 
-    // TODO :(
     pub fn convert_to_rgba(&self) -> Vec<u8> {
         let mut vec = vec![0; self.edge_size * self.edge_size * 4];
+        let norm_zero = -self.min_height / (self.max_height - self.min_height);
 
         for (i, data) in self.get_heightmap_norm_iter().enumerate() {
             let idx = i * 4;
             let val = (data * 255.) as u8;
-            vec[idx] = val;
-            vec[idx + 1] = val;
-            vec[idx + 2] = val;
-            vec[idx + 3] = 255;
+            if data > norm_zero {
+                vec[idx] = val / 3;
+                vec[idx + 1] = val;
+                vec[idx + 2] = val / 3;
+                vec[idx + 3] = 255;
+            } else {
+                vec[idx] = 0;
+                vec[idx + 1] = 0;
+                vec[idx + 2] = val;
+                vec[idx + 3] = 255;
+            }
         }
         vec
     }

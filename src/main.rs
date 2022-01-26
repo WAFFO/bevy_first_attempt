@@ -3,12 +3,12 @@ use bevy::{
     prelude::*,
     render::{options::WgpuOptions, render_resource::WgpuFeatures},
 };
-use oorandom::Rand32;
 
 mod debug_camera;
 mod game;
 mod generation;
 mod map;
+mod randstruct;
 mod terrain;
 
 use debug_camera::DebugCameraPlugin;
@@ -16,10 +16,11 @@ use game::GamePlugin;
 use generation::GenMenuPlugin;
 use generation::GenRunPlugin;
 use map::WorldDataPlugin;
+use randstruct::RandStruct;
 use terrain::TerrainPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-enum AppState {
+pub enum AppState {
     PreGenMenu,
     GenConfig,
     GenRun,
@@ -34,7 +35,7 @@ fn main() {
             ..Default::default()
         })
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(Rand32::new(0))
+        .insert_resource(RandStruct::new())
         .add_state(AppState::PreGenMenu)
         .add_plugins(DefaultPlugins)
         .add_plugin(WireframePlugin)
@@ -84,6 +85,17 @@ fn setup(
             ..Default::default()
         },
         transform: Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI * -0.75)),
+        ..Default::default()
+    });
+    // water plane
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: 1024.0 })),
+        material: materials.add(StandardMaterial {
+            base_color: Color::rgba(0.3, 0.4, 1., 0.95),
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        }),
+        transform: Transform::from_xyz(512., 0., 512.),
         ..Default::default()
     });
 }

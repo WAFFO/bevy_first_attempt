@@ -3,7 +3,7 @@ use bevy::{
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
 };
 
-use crate::{generation::MenuData, terrain::TerrainSettings};
+use crate::{generation::MenuData, map::BitImage, terrain::TerrainSettings};
 
 pub struct ImageData {
     pub image_entity: Entity,
@@ -78,6 +78,11 @@ pub fn setup_image(
     });
 }
 
-pub fn cleanup_image(mut commands: Commands, image_data: Res<ImageData>) {
+pub fn cleanup_image(
+    mut commands: Commands,
+    image_data: Res<ImageData>,
+    mut map_data: ResMut<BitImage>,
+) {
     commands.entity(image_data.image_entity).despawn_recursive();
+    map_data.clear();
 }

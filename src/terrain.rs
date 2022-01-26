@@ -51,7 +51,12 @@ pub fn terrain_startup(
 ) {
     commands.spawn_bundle(PbrBundle {
         mesh: terrain_data.mesh_handle.clone(),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        material: materials.add(StandardMaterial {
+            base_color: Color::rgb(0.3, 0.5, 0.3),
+            metallic: 0.,
+            reflectance: 0.1,
+            ..Default::default()
+        }),
         ..Default::default()
     });
     // .insert(Wireframe);

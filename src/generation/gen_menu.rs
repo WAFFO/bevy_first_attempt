@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    generation::{cleanup_image, setup_image},
+    generation::{cleanup_image, interact_reset_seed_button, setup_image, setup_options},
     AppState,
 };
 
@@ -12,8 +12,9 @@ impl Plugin for GenMenuPlugin {
         app.add_system_set(SystemSet::on_enter(AppState::PreGenMenu).with_system(setup_menu))
             .add_system_set(
                 SystemSet::on_enter(AppState::GenConfig)
+                    .with_system(update_button_text)
                     .with_system(setup_image)
-                    .with_system(update_button_text),
+                    .with_system(setup_options),
             )
             .add_system_set(
                 SystemSet::on_update(AppState::GenConfig).with_system(interact_generate_button),
@@ -21,7 +22,9 @@ impl Plugin for GenMenuPlugin {
             .add_system_set(SystemSet::on_enter(AppState::GenRun).with_system(update_button_text))
             .add_system_set(SystemSet::on_enter(AppState::GenDone).with_system(update_button_text))
             .add_system_set(
-                SystemSet::on_update(AppState::GenDone).with_system(interact_progress_bar_button),
+                SystemSet::on_update(AppState::GenDone)
+                    .with_system(interact_progress_bar_button)
+                    .with_system(interact_reset_seed_button),
             )
             .add_system_set(
                 SystemSet::on_exit(AppState::GenDone)
@@ -49,6 +52,7 @@ const PROG_BAR_HOVERED_BUTTON: Color = Color::rgb(0., 0.85, 0.);
 pub struct MenuData {
     root_node_entity: Entity,
     pub image_node_entity: Entity,
+    pub options_node_entity: Entity,
 }
 
 fn setup_menu(
@@ -82,7 +86,7 @@ fn setup_menu(
         .insert(Parent(root_node_entity))
         .id();
 
-    let _options_node_entity = commands
+    let options_node_entity = commands
         .spawn_bundle(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(35.), Val::Percent(100.)),
@@ -163,6 +167,7 @@ fn setup_menu(
     commands.insert_resource(MenuData {
         root_node_entity,
         image_node_entity,
+        options_node_entity,
     });
 
     state.set(AppState::GenConfig).unwrap();
