@@ -17,7 +17,9 @@ impl Plugin for GenMenuPlugin {
                     .with_system(setup_options),
             )
             .add_system_set(
-                SystemSet::on_update(AppState::GenConfig).with_system(interact_generate_button),
+                SystemSet::on_update(AppState::GenConfig)
+                    .with_system(interact_generate_button)
+                    .with_system(interact_reset_seed_button),
             )
             .add_system_set(SystemSet::on_enter(AppState::GenRun).with_system(update_button_text))
             .add_system_set(SystemSet::on_enter(AppState::GenDone).with_system(update_button_text))

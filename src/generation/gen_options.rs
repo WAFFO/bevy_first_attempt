@@ -6,7 +6,7 @@ use crate::{generation::MenuData, randstruct::RandStruct, AppState};
 pub struct ResetSeedButton;
 
 #[derive(Component)]
-struct SeedText;
+pub struct SeedText;
 
 const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
@@ -103,13 +103,20 @@ pub fn interact_reset_seed_button(
         (&Interaction, &mut UiColor),
         (Changed<Interaction>, With<Button>, With<ResetSeedButton>),
     >,
+    mut text_query: Query<&mut Text, With<SeedText>>,
     mut rand: ResMut<RandStruct>,
 ) {
     for (interaction, mut color) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
-                state.set(AppState::PreGenMenu).unwrap();
                 rand.randomize_map();
+                if *state.current() == AppState::GenDone {
+                    state.set(AppState::PreGenMenu).unwrap();
+                } else {
+                    for mut text in text_query.iter_mut() {
+                        text.sections[0].value = format!("Seed: {}", rand.map_seed());
+                    }
+                }
                 *color = PRESSED_BUTTON.into();
             }
             Interaction::Hovered => {
