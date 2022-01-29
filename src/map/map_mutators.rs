@@ -93,3 +93,16 @@ impl PerlinNoise {
         self.height_noise.get([x, y]) / 2. + 0.5
     }
 }
+
+pub fn average_by_neighbor(height_map: &mut BitImage, area: Rect<usize>) {
+    for x in area.left..(area.right + 1) {
+        for y in area.top..(area.bottom + 1) {
+            let (total, sum) =
+                height_map.reduce_neighbors(x, y, (0, 0.), |(count, sum), val: f32| {
+                    (count + 1, sum + val)
+                });
+            let average = sum / total as f32;
+            height_map.point_set(x, y, average);
+        }
+    }
+}

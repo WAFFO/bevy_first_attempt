@@ -118,6 +118,19 @@ impl BitImage {
         max_coord
     }
 
+    pub fn reduce_neighbors<T, F>(&self, x: usize, y: usize, mut start: T, reducer: F) -> T
+    where
+        F: Fn(T, f32) -> T,
+    {
+        let neighbors = Self::get_neighbors(x, y);
+        for coord in neighbors {
+            if let Ok(current) = self.get(coord.0, coord.1) {
+                start = reducer(start, current);
+            }
+        }
+        start
+    }
+
     fn get_neighbors(x: usize, y: usize) -> [(usize, usize); 8] {
         let y0 = if y > 0 { y - 1 } else { y };
         let x0 = if x > 0 { x - 1 } else { x };
