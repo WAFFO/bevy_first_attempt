@@ -8,6 +8,7 @@ pub struct RandStruct {
     map_seed: u64,
 }
 
+#[allow(dead_code)]
 impl RandStruct {
     pub fn new() -> Self {
         let mut timer = SystemTime::now();
@@ -20,6 +21,10 @@ impl RandStruct {
 
     pub fn get_map_float(&mut self) -> f32 {
         self.map.rand_float()
+    }
+
+    pub fn get_map_u32(&mut self) -> u32 {
+        self.map.rand_u32()
     }
 
     pub fn randomize_map(&mut self) {

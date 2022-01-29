@@ -17,7 +17,7 @@ use generation::GenMenuPlugin;
 use generation::GenRunPlugin;
 use map::WorldDataPlugin;
 use randstruct::RandStruct;
-use terrain::TerrainPlugin;
+use terrain::{TerrainPlugin, TerrainSettings};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -68,6 +68,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    terrain_settings: Res<TerrainSettings>,
 ) {
     // cube
     commands
@@ -95,7 +96,7 @@ fn setup(
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         }),
-        transform: Transform::from_xyz(512., 0., 512.),
+        transform: Transform::from_xyz(512., terrain_settings.water_height, 512.),
         ..Default::default()
     });
 }

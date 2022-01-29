@@ -1,13 +1,11 @@
 use bevy::prelude::*;
 
 use crate::{
-    generation::ProgressBar,
-    map::{BitImage, PlasmaSquare},
+    generation::{ImageData, ProgressBar},
+    map::{BitImage, PerlinNoise},
     terrain::{terrain_build, TerrainMesh, TerrainSettings},
     AppState, RandStruct,
 };
-
-use super::ImageData;
 
 pub struct GenRunPlugin;
 
@@ -54,7 +52,7 @@ fn generation_main(
 ) {
     match tracker.current_stage {
         0 => run_test(tracker),
-        1 => run_plasma_setup(heightmap, rand, terrain_settings, tracker),
+        1 => run_perlin_noise(heightmap, rand, terrain_settings, tracker),
         2 => terrain_build(
             terrain_settings,
             terrain_data,
@@ -72,20 +70,21 @@ fn run_test(mut tracker: ResMut<Tracker>) {
     tracker.add_progress(100.);
 }
 
-fn run_plasma_setup(
-    mut heightmap: ResMut<BitImage>,
+fn run_perlin_noise(
+    heightmap: ResMut<BitImage>,
     mut rand: ResMut<RandStruct>,
     terrain_settings: Res<TerrainSettings>,
     mut tracker: ResMut<Tracker>,
 ) {
     let s = terrain_settings.unit_count;
-    let quad = PlasmaSquare::new(0, 0, s, s);
-    let scale = 10.;
-    heightmap.point_set(0, 0, rand.get_map_float() * scale);
-    heightmap.point_set(0, s, rand.get_map_float() * scale);
-    heightmap.point_set(s, 0, rand.get_map_float() * scale);
-    heightmap.point_set(s, s, rand.get_map_float() * scale);
-    PlasmaSquare::run_mutate(heightmap, quad, rand);
+    let rect = Rect {
+        top: 0,
+        left: 0,
+        bottom: s,
+        right: s,
+    };
+    let mut perlin = PerlinNoise::new(&mut rand);
+    perlin.run_mutate(heightmap, rect);
     tracker.add_progress(100.);
 }
 
@@ -119,10 +118,14 @@ fn update_image(
     image_handle: Res<ImageData>,
     mut images: ResMut<Assets<Image>>,
     height_map: Res<BitImage>,
+    terrain_settings: Res<TerrainSettings>,
 ) {
     let image = images.get_mut(&image_handle.image_handle);
     if let Some(img) = image {
-        img.data.clone_from(&height_map.convert_to_rgba());
+        img.data.clone_from(
+            &height_map
+                .convert_to_rgba(terrain_settings.height_scale, terrain_settings.water_height),
+        );
     }
 }
 

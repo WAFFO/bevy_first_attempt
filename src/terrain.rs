@@ -13,6 +13,8 @@ pub struct TerrainPlugin;
 pub struct TerrainSettings {
     pub unit_count: usize,
     pub unit_size: f32,
+    pub height_scale: f32,
+    pub water_height: f32,
 }
 
 pub struct TerrainMesh {
@@ -40,6 +42,8 @@ impl Default for TerrainSettings {
         TerrainSettings {
             unit_count: 1024,
             unit_size: 1.,
+            height_scale: 300.,
+            water_height: 5.,
         }
     }
 }
@@ -91,7 +95,7 @@ pub fn terrain_build(
         for cx in 0..(size + 1) {
             // do height here (debug wave)
             // let h = ((cx + cy) as f32 / 4.).sin();
-            let h = heightmap.get(cx, cy).unwrap() * unit_size;
+            let h = heightmap.get(cx, cy).unwrap() * unit_size * terrain_settings.height_scale;
             vertices[vertex_index] = [cx as f32 * unit_size, h, cy as f32 * unit_size];
             vertex_index += 1;
         }

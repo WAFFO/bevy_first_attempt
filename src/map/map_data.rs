@@ -150,13 +150,14 @@ impl BitImage {
         Ok(())
     }
 
-    pub fn convert_to_rgba(&self) -> Vec<u8> {
+    pub fn convert_to_rgba(&self, height_scale: f32, water_height: f32) -> Vec<u8> {
         let mut vec = vec![0; self.edge_size * self.edge_size * 4];
-        let norm_zero = -self.min_height / (self.max_height - self.min_height);
+        let norm_zero =
+            (water_height / height_scale - self.min_height) / (self.max_height - self.min_height);
 
         for (i, data) in self.get_heightmap_norm_iter().enumerate() {
             let idx = i * 4;
-            let val = (data * 255.) as u8;
+            let val = (data * 200.) as u8 + 55;
             if data > norm_zero {
                 vec[idx] = val / 3;
                 vec[idx + 1] = val;

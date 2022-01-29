@@ -1,8 +1,7 @@
 use bevy::prelude::*;
-use std::collections::LinkedList;
+use noise::{NoiseFn, Perlin, Seedable};
 
-use crate::map::BitImage;
-use crate::randstruct::RandStruct;
+use crate::{map::BitImage, randstruct::RandStruct};
 
 #[derive(Component)]
 pub struct ReverseRain {
@@ -56,82 +55,41 @@ impl ReverseRain {
     }
 }
 
-pub struct PlasmaSquare {
-    pub x1: usize,
-    pub y1: usize,
-    pub x2: usize,
-    pub y2: usize,
+pub struct PerlinNoise {
+    height_noise: Perlin,
 }
 
-impl PlasmaSquare {
-    pub fn new(x1: usize, y1: usize, x2: usize, y2: usize) -> Self {
-        PlasmaSquare { x1, y1, x2, y2 }
+impl PerlinNoise {
+    pub fn new(rand: &mut RandStruct) -> Self {
+        PerlinNoise {
+            height_noise: Perlin::new().set_seed(rand.get_map_u32()),
+        }
     }
 
-    pub fn run_mutate(
-        mut height_map: ResMut<BitImage>,
-        first_quad: PlasmaSquare,
-        mut rand: ResMut<RandStruct>,
-    ) {
-        let mut count = 0;
-        let mut queue = LinkedList::new();
-        queue.push_back(first_quad);
-        while !queue.is_empty() {
-            count += 1;
-            let quad = queue.pop_front().unwrap(); // stack.remove(0);
-            let (x1, y1, x2, y2) = (quad.x1, quad.y1, quad.x2, quad.y2);
-            let xa = x1 + (x2 - x1) / 2;
-            let ya = y1 + (y2 - y1) / 2;
-            let x1y1 = height_map.get_ignore(x1, y1);
-            let x2y1 = height_map.get_ignore(x2, y1);
-            let x1y2 = height_map.get_ignore(x1, y2);
-            let x2y2 = height_map.get_ignore(x2, y2);
-            let range = (x2 - x1) as f32 / 4.;
-            let range2 = range / 2.;
-            let d_array = [
-                rand.get_map_float() * range2 - rand.get_map_float() * range2,
-                rand.get_map_float() * range2 - rand.get_map_float() * range2,
-                rand.get_map_float() * range2 - rand.get_map_float() * range2,
-                rand.get_map_float() * range2 - rand.get_map_float() * range2,
-            ];
-            let avg1 = (x1y1 + x2y1) / 2. + d_array[0]; // top
-            let avg2 = (x2y1 + x2y2) / 2. + d_array[1]; // right
-            let avg3 = (x1y2 + x2y2) / 2. + d_array[2]; // bottom
-            let avg4 = (x1y1 + x1y2) / 2. + d_array[3]; // left
-            let dist = rand.get_map_float() * range - rand.get_map_float() * range;
-            let avg5 = (x1y1 + x1y2 + x2y1 + x2y2) / 4. + dist; // middle
-            height_map.point_set(xa, y1, avg1);
-            height_map.point_set(x2, ya, avg2);
-            height_map.point_set(xa, y2, avg3);
-            height_map.point_set(x1, ya, avg4);
-            height_map.point_set(xa, ya, avg5);
-            if xa > x1 && ya > y1 {
-                queue.push_back(PlasmaSquare {
-                    x1,
-                    y1,
-                    x2: xa,
-                    y2: ya,
-                });
-                queue.push_back(PlasmaSquare {
-                    x1: xa,
-                    y1,
-                    x2,
-                    y2: ya,
-                });
-                queue.push_back(PlasmaSquare {
-                    x1: xa,
-                    y1: ya,
-                    x2,
-                    y2,
-                });
-                queue.push_back(PlasmaSquare {
-                    x1,
-                    y1: ya,
-                    x2: xa,
-                    y2,
-                });
+    pub fn run_mutate(&mut self, mut height_map: ResMut<BitImage>, area: Rect<usize>) {
+        let width = (area.right - area.left) as f64;
+        let height = (area.bottom - area.top) as f64;
+        let base_frequency = 5.;
+        for x in area.left..(area.right + 1) {
+            for y in area.top..(area.bottom + 1) {
+                let nx = x as f64 / width - 0.5;
+                let ny = y as f64 / height - 0.5;
+                let d = (2. * nx.abs().max(ny.abs())).powf(2.);
+                let nx = (nx) * base_frequency;
+                let ny = (ny) * base_frequency;
+                let e = self.get_height(nx, ny)
+                    + 0.53 * self.get_height(2. * nx, 2. * ny)
+                    + 0.20 * self.get_height(4. * nx, 4. * ny)
+                    + 0.12 * self.get_height(8. * nx, 8. * ny);
+                let e = e / (1. + 0.43 + 0.20 + 0.12);
+                let e = (0.9 + e - d) / 2.;
+                let e = e.powf(4.5);
+                height_map.point_set(x, y, e as f32);
             }
         }
-        println!("{} rectangles", count);
+    }
+
+    fn get_height(&mut self, x: f64, y: f64) -> f64 {
+        self.height_noise.get([x, y]) / 2. + 0.5
     }
 }
