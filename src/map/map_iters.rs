@@ -18,7 +18,6 @@ impl<'a> HeightMapIter<'a> {
 
 impl<'a> HeightMapNormIter<'a> {
     pub fn new(array: &'a Vec<f32>, max: f32, min: f32) -> Self {
-        println!("norm! max height: {}, min height: {}", max, min);
         HeightMapNormIter {
             array,
             index: 0,

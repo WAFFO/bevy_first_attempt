@@ -78,8 +78,8 @@ impl PerlinNoise {
                 let nx = (nx) * base_frequency;
                 let ny = (ny) * base_frequency;
                 let e = self.get_height(nx, ny)
-                    + 0.53 * self.get_height(2. * nx, 2. * ny)
-                    + 0.20 * self.get_height(4. * nx, 4. * ny)
+                    + 0.53 * self.get_height(2. * (nx + 1.), 2. * (ny + 1.))
+                    + 0.20 * self.get_height(4. * (nx - 1.), 4. * (ny - 1.))
                     + 0.12 * self.get_height(8. * nx, 8. * ny)
                     + 0.05 * self.get_height(32. * nx, 32. * ny);
                 let e = e / (1. + 0.53 + 0.20 + 0.12 + 0.05);

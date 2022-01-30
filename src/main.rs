@@ -82,10 +82,11 @@ fn setup(
     commands.spawn_bundle(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: false,
+            illuminance: 50000.0,
             ..Default::default()
         },
         transform: Transform::from_rotation(
-            Quat::from_rotation_y(PI * -0.75) * Quat::from_rotation_z(PI * -0.5),
+            Quat::from_rotation_z(PI * -0.25) * Quat::from_rotation_y(PI * -0.75),
         ),
         ..Default::default()
     });

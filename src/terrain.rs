@@ -73,7 +73,7 @@ pub fn terrain_startup(
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Plane { size: limit })),
         material: materials.add(StandardMaterial {
-            base_color: Color::rgba(0.3, 0.4, 1., 0.95),
+            base_color: Color::rgba(0.3, 0.4, 1., 0.25),
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         }),
@@ -155,15 +155,27 @@ pub fn terrain_build(
         }
     }
 
+    let s = size as f32;
+
     // normal
     for i in (2..indices.len() - 3).step_by(3) {
-        let p = (
+        let p = [
             vertices[indices[i - 2] as usize],
             vertices[indices[i - 1] as usize],
             vertices[indices[i] as usize],
-        );
-        let u = (p.1[0] - p.0[0], p.1[1] - p.0[1], p.1[2] - p.0[2]);
-        let v = (p.2[0] - p.0[0], p.2[1] - p.0[1], p.2[2] - p.0[2]);
+        ];
+        // this blends the edge of the map with the plane underneath
+        let mut is_edge = false;
+        for i in 0..3 {
+            if p[i][0] == 0. || p[i][0] == s || p[i][2] == 0. || p[i][2] == s {
+                is_edge = true;
+            }
+        }
+        if is_edge {
+            continue;
+        }
+        let u = (p[1][0] - p[0][0], p[1][1] - p[0][1], p[1][2] - p[0][2]);
+        let v = (p[2][0] - p[0][0], p[2][1] - p[0][1], p[2][2] - p[0][2]);
         let n = (
             (u.1 * v.2) - (u.2 * v.1),
             (u.2 * v.0) - (u.0 * v.2),
