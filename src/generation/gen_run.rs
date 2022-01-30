@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::{
     generation::{ImageData, ProgressBar},
-    map::{average_by_neighbor, BitImage, PerlinNoise},
+    map::{average_by_neighbor, zero_edges, BitImage, PerlinNoise},
     terrain::{terrain_build, TerrainMesh, TerrainSettings},
     AppState, RandStruct,
 };
@@ -34,7 +34,7 @@ impl Default for Tracker {
         Tracker {
             current_stage: 0,
             current_step_progress: 0.,
-            max_stage: 4,
+            max_stage: 5,
         }
     }
 }
@@ -54,7 +54,8 @@ fn generation_main(
         0 => run_test(tracker),
         1 => run_perlin_noise(heightmap, rand, terrain_settings, tracker),
         2 => run_averaging(heightmap, terrain_settings, tracker),
-        3 => terrain_build(
+        3 => run_clean_edges(heightmap, terrain_settings, tracker),
+        4 => terrain_build(
             terrain_settings,
             terrain_data,
             heightmap.as_ref(),
@@ -105,6 +106,22 @@ fn run_averaging(
     let step = 1. / total as f32;
     average_by_neighbor(heightmap.as_mut(), rect);
     tracker.add_progress(step);
+}
+
+fn run_clean_edges(
+    mut heightmap: ResMut<BitImage>,
+    terrain_settings: Res<TerrainSettings>,
+    mut tracker: ResMut<Tracker>,
+) {
+    let s = terrain_settings.unit_count;
+    let rect = Rect {
+        top: 0,
+        left: 0,
+        bottom: s,
+        right: s,
+    };
+    zero_edges(heightmap.as_mut(), rect);
+    tracker.add_progress(100.);
 }
 
 fn end_generation(mut state: ResMut<State<AppState>>) {

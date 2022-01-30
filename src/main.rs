@@ -17,7 +17,7 @@ use generation::GenMenuPlugin;
 use generation::GenRunPlugin;
 use map::WorldDataPlugin;
 use randstruct::RandStruct;
-use terrain::{TerrainPlugin, TerrainSettings};
+use terrain::TerrainPlugin;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -53,8 +53,7 @@ pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Msaa { samples: 1 })
-            .add_startup_system(setup)
+        app.add_startup_system(setup)
             .add_system(rotate)
             .add_system(toggle_wireframe);
     }
@@ -68,8 +67,8 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    terrain_settings: Res<TerrainSettings>,
 ) {
+    use std::f32::consts::PI;
     // cube
     commands
         .spawn_bundle(PbrBundle {
@@ -85,18 +84,9 @@ fn setup(
             shadows_enabled: false,
             ..Default::default()
         },
-        transform: Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI * -0.75)),
-        ..Default::default()
-    });
-    // water plane
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 1024.0 })),
-        material: materials.add(StandardMaterial {
-            base_color: Color::rgba(0.3, 0.4, 1., 0.95),
-            alpha_mode: AlphaMode::Blend,
-            ..Default::default()
-        }),
-        transform: Transform::from_xyz(512., terrain_settings.water_height, 512.),
+        transform: Transform::from_rotation(
+            Quat::from_rotation_y(PI * -0.75) * Quat::from_rotation_z(PI * -0.5),
+        ),
         ..Default::default()
     });
 }

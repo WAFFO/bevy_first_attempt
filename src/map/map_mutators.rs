@@ -80,8 +80,9 @@ impl PerlinNoise {
                 let e = self.get_height(nx, ny)
                     + 0.53 * self.get_height(2. * nx, 2. * ny)
                     + 0.20 * self.get_height(4. * nx, 4. * ny)
-                    + 0.12 * self.get_height(8. * nx, 8. * ny);
-                let e = e / (1. + 0.43 + 0.20 + 0.12);
+                    + 0.12 * self.get_height(8. * nx, 8. * ny)
+                    + 0.05 * self.get_height(32. * nx, 32. * ny);
+                let e = e / (1. + 0.53 + 0.20 + 0.12 + 0.05);
                 let e = (0.9 + e - d) / 2.;
                 let e = e.powf(4.5);
                 height_map.point_set(x, y, e as f32);
@@ -104,5 +105,22 @@ pub fn average_by_neighbor(height_map: &mut BitImage, area: Rect<usize>) {
             let average = sum / total as f32;
             height_map.point_set(x, y, average);
         }
+    }
+}
+
+pub fn zero_edges(height_map: &mut BitImage, area: Rect<usize>) {
+    let mut fun = |x, y| {
+        height_map.point_set(x, y, 0.);
+    };
+    for x in area.left..(area.right + 1) {
+        if x == area.left || x == area.right {
+            for y in area.top..(area.bottom + 1) {
+                fun(x, y);
+            }
+        } else {
+            for y in [area.top, area.bottom] {
+                fun(x, y);
+            }
+        };
     }
 }

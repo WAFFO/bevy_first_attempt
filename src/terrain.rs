@@ -52,6 +52,8 @@ pub fn terrain_startup(
     mut commands: Commands,
     terrain_data: Res<TerrainMesh>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    terrain_settings: Res<TerrainSettings>,
 ) {
     commands.spawn_bundle(PbrBundle {
         mesh: terrain_data.mesh_handle.clone(),
@@ -64,7 +66,34 @@ pub fn terrain_startup(
         }),
         ..Default::default()
     });
-    // .insert(Wireframe);
+
+    let limit = 100000.;
+
+    // water plane
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: limit })),
+        material: materials.add(StandardMaterial {
+            base_color: Color::rgba(0.3, 0.4, 1., 0.95),
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        }),
+        transform: Transform::from_xyz(0., terrain_settings.water_height, 0.),
+        ..Default::default()
+    });
+
+    // ground plane
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane { size: limit })),
+        material: materials.add(StandardMaterial {
+            base_color: Color::rgb(0.3, 0.5, 0.3),
+            metallic: 0.,
+            reflectance: 0.1,
+            perceptual_roughness: 0.9,
+            ..Default::default()
+        }),
+        transform: Transform::from_xyz(0., 0., 0.),
+        ..Default::default()
+    });
 }
 
 pub fn terrain_build(
